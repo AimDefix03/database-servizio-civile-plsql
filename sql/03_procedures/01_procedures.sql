@@ -1,6 +1,8 @@
 -- =============================================================================
 -- Procedure di gestione (PL/SQL)
--- Ogni procedura valida gli input, esegue l'operazione e conferma con COMMIT.
+-- Ogni procedura valida gli input ed esegue l'operazione. La transazione è
+-- gestita dal chiamante (nessun COMMIT/ROLLBACK interno): le procedure sono
+-- componibili e testabili con ROLLBACK.
 -- =============================================================================
 
 CREATE OR REPLACE PROCEDURE disattiva_progetto (
@@ -57,18 +59,11 @@ BEGIN
     SET stato_progetto = 'SOSPESO'
     WHERE id_progetto = p_id_progetto;
 
-    COMMIT;
-
     DBMS_OUTPUT.PUT_LINE(
         'Progetto disattivato con successo. ID progetto: ' || p_id_progetto ||
         '. Sedi collegate mantenute: ' || v_count_sedi ||
         '. Motivazione: ' || p_motivazione
     );
-
-EXCEPTION
-    WHEN OTHERS THEN
-        ROLLBACK;
-        RAISE;
 END;
 /
 
@@ -137,16 +132,9 @@ BEGIN
         p_descrizione_formazione
     );
 
-    COMMIT;
-
     DBMS_OUTPUT.PUT_LINE(
         'Formazione registrata con successo. ID formazione: ' || v_id_formazione
     );
-
-EXCEPTION
-    WHEN OTHERS THEN
-        ROLLBACK;
-        RAISE;
 END;
 /
 
@@ -252,18 +240,11 @@ BEGIN
         p_note
     );
 
-    COMMIT;
-
     DBMS_OUTPUT.PUT_LINE(
         'Partecipazione alla formazione registrata con successo. Assegnazione: '
         || p_id_assegnazione ||
         ', formazione: ' || p_id_formazione
     );
-
-EXCEPTION
-    WHEN OTHERS THEN
-        ROLLBACK;
-        RAISE;
 END;
 /
 
@@ -371,15 +352,8 @@ BEGIN
         p_note
     );
 
-    COMMIT;
-
     DBMS_OUTPUT.PUT_LINE(
         'Monitoraggio registrato con successo. ID monitoraggio: ' || v_id_monitoraggio
     );
-
-EXCEPTION
-    WHEN OTHERS THEN
-        ROLLBACK;
-        RAISE;
 END;
 /

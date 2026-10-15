@@ -13,7 +13,7 @@ Database Oracle per la gestione amministrativa del Servizio Civile: enti, sedi, 
 - **Formazione e monitoraggio**: eventi formativi, partecipazioni, monitoraggi iniziali/intermedi/finali.
 - **Sicurezza**: tre ruoli con privilegi minimi (amministratore, operatore, volontario).
 
-Elenco completo delle regole in [docs/regole_di_business.md](docs/regole_di_business.md).
+Esempi di interrogazione (posti liberi, ore svolte, permessi residui...) in [sql/07_queries/esempi.sql](sql/07_queries/esempi.sql). Elenco completo delle regole in [docs/regole_di_business.md](docs/regole_di_business.md).
 
 ## Requisiti
 
@@ -40,7 +40,7 @@ docker compose up -d --wait
 scripts/run-tests.sh
 ```
 
-Lo script installa il database nel container e lancia `tests/test_vincoli.sql`, che verifica il rifiuto delle operazioni non valide e la decadenza automatica, poi esegue un `ROLLBACK`. Gli stessi passi girano in CI a ogni push ([workflow](.github/workflows/ci.yml)). Testato su Oracle Database Free 23ai.
+Lo script installa il database nel container e lancia `tests/test_vincoli.sql`, (19 casi: rifiuto delle operazioni non valide, esito delle procedure, decadenza automatica), poi esegue un `ROLLBACK`. Gli stessi passi girano in CI a ogni push ([workflow](.github/workflows/ci.yml)). Testato su Oracle Database Free 23ai.
 
 ## Struttura
 
@@ -56,7 +56,8 @@ Lo script installa il database nel container e lancia `tests/test_vincoli.sql`, 
 │   ├── 03_procedures/    procedure PL/SQL
 │   ├── 04_triggers/      vincoli applicativi
 │   ├── 05_views/         viste
-│   └── 06_security/      ruoli e privilegi
+│   ├── 06_security/      ruoli e privilegi
+│   └── 07_queries/       query di esempio (sola lettura)
 ├── tests/                test dei vincoli
 └── docs/                 relazione, diagrammi, regole di business
 ```
@@ -69,7 +70,7 @@ Lo script installa il database nel container e lancia `tests/test_vincoli.sql`, 
 
 ## Dati di esempio
 
-I dati in `sql/02_seed/` sono interamente fittizi (nomi, codici fiscali ed e-mail inventati). Gli ID inferiori a 1000 sono riservati al seed; le sequenze generano da 1000 in poi.
+I dati in `sql/02_seed/` sono interamente fittizi (nomi, codici fiscali ed e-mail inventati). Il seed viene caricato con i trigger attivi, quindi ogni installazione ne verifica la coerenza. Gli ID inferiori a 1000 sono riservati al seed; le sequenze generano da 1000 in poi.
 
 ## Licenza
 

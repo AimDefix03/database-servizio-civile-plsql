@@ -118,6 +118,9 @@ BEGIN
 END;
 /
 
+-- La giornata deve cadere nel periodo dell'assegnazione. Lo stato non conta:
+-- le assegnazioni concluse o decadute hanno una data di fine effettiva, e
+-- devono poter ricevere le giornate del loro periodo (storico).
 CREATE OR REPLACE TRIGGER check_presenza_assegnazione_attiva
 BEFORE INSERT OR UPDATE OF id_assegnazione, data_servizio
 ON REGISTRO_SERVIZIO
@@ -129,14 +132,13 @@ BEGIN
     INTO v_count
     FROM ASSEGNAZIONE
     WHERE id_assegnazione = :NEW.id_assegnazione
-      AND stato_assegnazione = 'ATTIVA'
       AND :NEW.data_servizio >= data_inizio
       AND :NEW.data_servizio <= NVL(data_fine_effettiva, NVL(data_fine_prevista, DATE '9999-12-31'));
 
     IF v_count = 0 THEN
         RAISE_APPLICATION_ERROR(
             -20004,
-            'La presenza può essere registrata solo per una assegnazione attiva e valida nella data indicata.'
+            'La presenza può essere registrata solo per una assegnazione esistente e valida nella data indicata.'
         );
     END IF;
 END;

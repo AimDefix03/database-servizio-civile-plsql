@@ -7,7 +7,7 @@ Le regole sono applicate dal database, non dall'applicazione che lo usa.
 | Un volontario non può avere due assegnazioni attive con periodi sovrapposti | Trigger `check_assegnazione_attiva` | `-20001` |
 | Un'assegnazione può riferirsi solo a una sede collegata al progetto | Trigger `check_progetto_sede_assegnazione` | `-20002` |
 | Una variazione si approva solo se la vecchia assegnazione è conclusa e ne esiste una nuova collegata | Trigger `check_storico_variazione` | `-20003` |
-| Il registro di servizio si compila solo per assegnazioni attive e nel loro periodo | Trigger `check_presenza_assegnazione_attiva` | `-20004` |
+| Il registro di servizio si compila solo per giornate comprese nel periodo dell'assegnazione (anche se poi conclusa o decaduta) | Trigger `check_presenza_assegnazione_attiva` | `-20004` |
 | Il permesso straordinario richiede una motivazione nelle note | Trigger `check_permesso_straordinario_valido` | `-20009` |
 | I monitoraggi devono cadere nel periodo dell'assegnazione | Trigger `check_monitoraggio_assegnazione_valida` | `-20016` |
 | Giornate di servizio con ore > 0; permessi e malattie con ore = 0 | Trigger `check_coerenza_tipo_giornata_ore` + CHECK | `-20017`, `-20018` |
