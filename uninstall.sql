@@ -1,0 +1,39 @@
+-- =============================================================================
+-- Rimozione di tutti gli oggetti creati da install.sql
+-- Gli errori "oggetto inesistente" vengono ignorati, quindi lo script e'
+-- rieseguibile.
+-- =============================================================================
+SET SERVEROUTPUT ON
+
+BEGIN
+    FOR o IN (
+        SELECT 'DROP ' || t || ' ' || n AS stmt FROM (
+            SELECT 'ROLE' t, 'ruolo_amministratore' n FROM DUAL UNION ALL
+            SELECT 'ROLE', 'ruolo_operatore' FROM DUAL UNION ALL
+            SELECT 'ROLE', 'ruolo_volontario' FROM DUAL UNION ALL
+            SELECT 'VIEW', 'Presenze_Da_Validare' FROM DUAL UNION ALL
+            SELECT 'PROCEDURE', 'disattiva_progetto' FROM DUAL UNION ALL
+            SELECT 'PROCEDURE', 'registra_formazione' FROM DUAL UNION ALL
+            SELECT 'PROCEDURE', 'registra_partecipazione_formazione' FROM DUAL UNION ALL
+            SELECT 'PROCEDURE', 'registra_monitoraggio' FROM DUAL UNION ALL
+            SELECT 'SEQUENCE', 'seq_formazione' FROM DUAL UNION ALL
+            SELECT 'SEQUENCE', 'seq_monitoraggio' FROM DUAL
+        )
+    ) LOOP
+        BEGIN EXECUTE IMMEDIATE o.stmt; EXCEPTION WHEN OTHERS THEN NULL; END;
+    END LOOP;
+
+    -- Tabelle in ordine inverso di dipendenza (i trigger cadono con le tabelle)
+    FOR t IN (
+        SELECT column_value AS n FROM TABLE(SYS.ODCIVARCHAR2LIST(
+            'RICHIESTA_VARIAZIONE', 'MONITORAGGIO', 'REGISTRO_SERVIZIO',
+            'ASSEGNAZIONE_FORMAZIONE', 'FORMAZIONE', 'ASSEGNAZIONE', 'VOLONTARIO',
+            'PROGETTO_SEDE', 'PROGETTO', 'OPERATORE', 'SEDE', 'ENTE'))
+    ) LOOP
+        BEGIN EXECUTE IMMEDIATE 'DROP TABLE ' || t.n || ' CASCADE CONSTRAINTS PURGE';
+        EXCEPTION WHEN OTHERS THEN NULL; END;
+    END LOOP;
+END;
+/
+
+PROMPT Disinstallazione completata.

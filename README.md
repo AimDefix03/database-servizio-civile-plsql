@@ -1,87 +1,70 @@
 # DB Servizio Civile
 
-Progetto universitario di basi di dati per la gestione amministrativa del Servizio Civile.
+Database Oracle per la gestione amministrativa del Servizio Civile: enti, sedi, progetti, volontari, assegnazioni, registro di servizio, formazione, monitoraggi e variazioni di percorso. Le regole di business sono applicate direttamente dal database tramite vincoli, trigger e procedure PL/SQL.
 
-## Descrizione
+![Diagramma ER](docs/diagrammi/diagramma_er.png)
 
-Il progetto modella un sistema informativo per enti, sedi, progetti, volontari, operatori, assegnazioni, formazione, monitoraggio, registro di servizio e richieste di variazione.
+## Funzionalità
 
-Il database è pensato per gestire:
+- **Anagrafiche**: enti, sedi, operatori (OLP, coordinatori, amministrativi), volontari.
+- **Progetti e posti**: progetti collegati alle sedi con posti disponibili.
+- **Assegnazioni**: percorso del volontario con storico delle variazioni (sede/progetto) e controllo delle sovrapposizioni.
+- **Registro di servizio**: ore svolte, permessi e malattie con limiti configurabili; decadenza automatica al superamento.
+- **Formazione e monitoraggio**: eventi formativi, partecipazioni, monitoraggi iniziali/intermedi/finali.
+- **Sicurezza**: tre ruoli con privilegi minimi (amministratore, operatore, volontario).
 
-- anagrafica di enti, sedi, operatori e volontari;
-- progetti e sedi collegate;
-- assegnazioni dei volontari ai progetti;
-- registro giornaliero del servizio;
-- formazione e partecipazioni;
-- monitoraggi;
-- richieste di variazione;
-- vincoli applicativi tramite trigger;
-- procedure PL/SQL per operazioni gestionali;
-- viste e permessi utente.
+Elenco completo delle regole in [docs/regole_di_business.md](docs/regole_di_business.md).
 
-## Tecnologie
+## Requisiti
 
-- Oracle SQL
-- PL/SQL
-- Modellazione ER
-- Diagramma relazionale
-- Diagramma dei casi d'uso
+- Oracle Database 12c o superiore (es. Oracle XE)
+- SQL*Plus o SQLcl
+- Un utente/schema con i privilegi `CREATE TABLE`, `SEQUENCE`, `VIEW`, `PROCEDURE`, `TRIGGER`, `ROLE`
 
-## Struttura del progetto
+## Installazione
 
-```text
-DB_ServizioCivile/
-├── CreateTable/
-│   └── CreateTable.sql
-├── InsertInto/
-│   ├── 1_InsertIntoEnte.sql
-│   ├── 2_InsertIntoSede.sql
-│   ├── 3_InsertIntoProgetto.sql
-│   ├── 4_InsertIntoOperatore.sql
-│   ├── 5_InsertIntoVolontario.sql
-│   ├── 6_InsertIntoProgettoSede.sql
-│   ├── 7_InsertIntoFormazione.sql
-│   ├── 8_InsertIntoAssegnazione.sql
-│   ├── 9_InsertIntoAssegnazione_Formazione.sql
-│   ├── 10_InsertIntoRegistroServizio.sql
-│   ├── 11_InsertIntoMonitoraggio.sql
-│   └── 12_InsertIntoRichiestaVariazione.sql
-├── Procedure/
-│   └── Procedure.sql
-├── Trigger/
-│   └── Trigger.sql
-├── Viste/
-│   └── Vista_Presenze_Da_Validare.sql
-├── Permessi/
-│   └── Permessi.sql
-├── Diagrammi/
-│   ├── DiagrammaER/
-│   ├── DiagrammaRelazionale/
-│   └── Diagramma_Casi_Uso/
-└── Relazione/
-    └── RelazioneDB_Servizio_Civile.pdf
+Dalla radice del repository:
+
+```bash
+sqlplus utente/password@//host:1521/servizio @install.sql
 ```
 
-## Ordine consigliato di esecuzione degli script
+Per rimuovere tutto: `@uninstall.sql`.
 
-1. `CreateTable/CreateTable.sql`
-2. Script nella cartella `InsertInto`, seguendo l'ordine numerico dei file
-3. `Procedure/Procedure.sql`
-4. `Trigger/Trigger.sql`
-5. `Viste/Vista_Presenze_Da_Validare.sql`
-6. `Permessi/Permessi.sql`
+## Test
 
-## Contenuto principale
+```bash
+sqlplus utente/password@//host:1521/servizio @tests/test_vincoli.sql
+```
 
-- 12 tabelle principali
-- script di popolamento dati
-- procedure PL/SQL per operazioni gestionali
-- trigger per il controllo dei vincoli applicativi
-- vista per le presenze da validare
-- script di gestione permessi
-- diagrammi progettuali
-- relazione finale in PDF
+I test verificano il rifiuto delle operazioni non valide e la decadenza automatica, poi eseguono un `ROLLBACK`.
 
-## Nota
+## Struttura
 
-Prima dell'esecuzione in ambiente Oracle, verificare la sintassi richiesta dal client utilizzato, in particolare la terminazione delle istruzioni SQL e PL/SQL.
+```text
+.
+├── install.sql / uninstall.sql
+├── sql/
+│   ├── 01_schema/        tabelle e indici
+│   ├── 02_seed/          dati di esempio (fittizi)
+│   ├── 03_procedures/    procedure PL/SQL
+│   ├── 04_triggers/      vincoli applicativi
+│   ├── 05_views/         viste
+│   └── 06_security/      ruoli e privilegi
+├── tests/                test dei vincoli
+└── docs/                 relazione, diagrammi, regole di business
+```
+
+## Documentazione
+
+- [Regole di business](docs/regole_di_business.md)
+- [Relazione completa (PDF)](docs/relazione.pdf)
+- Diagrammi: [ER](docs/diagrammi/diagramma_er.png) · [relazionale](docs/diagrammi/diagramma_relazionale.png) · [casi d'uso](docs/diagrammi/diagramma_casi_uso.png)
+
+## Dati di esempio
+
+I dati in `sql/02_seed/` sono interamente fittizi (nomi, codici fiscali ed e-mail inventati). Gli ID inferiori a 1000 sono riservati al seed; le sequenze generano da 1000 in poi.
+
+## Licenza
+
+[MIT](LICENSE)

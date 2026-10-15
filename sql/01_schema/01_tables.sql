@@ -1,3 +1,7 @@
+-- =============================================================================
+-- Schema: tabelle del database Servizio Civile (Oracle)
+-- =============================================================================
+
 CREATE TABLE ENTE (
     id_ente NUMBER(10,0) PRIMARY KEY,
     denominazione VARCHAR2(100) NOT NULL,
@@ -7,7 +11,7 @@ CREATE TABLE ENTE (
 
     CONSTRAINT chk_email_ente
         CHECK (REGEXP_LIKE(email, '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'))
-)
+);
 
 CREATE TABLE SEDE (
     id_sede NUMBER(10,0) PRIMARY KEY,
@@ -24,7 +28,7 @@ CREATE TABLE SEDE (
 
     CONSTRAINT chk_cap_sede
         CHECK (REGEXP_LIKE(cap_sede, '^[0-9]{5}$'))
-)
+);
 
 CREATE TABLE OPERATORE (
     id_operatore NUMBER(10,0) PRIMARY KEY,
@@ -45,7 +49,7 @@ CREATE TABLE OPERATORE (
 
     CONSTRAINT chk_ruolo_operatore
         CHECK (ruolo_operatore IN ('OLP', 'COORDINATORE', 'AMMINISTRATIVO'))
-)
+);
 
 CREATE TABLE PROGETTO (
     id_progetto NUMBER(10,0) PRIMARY KEY,
@@ -66,7 +70,7 @@ CREATE TABLE PROGETTO (
 
     CONSTRAINT chk_stato_progetto
         CHECK (stato_progetto IN ('ATTIVO', 'CONCLUSO', 'SOSPESO'))
-)
+);
 
 CREATE TABLE PROGETTO_SEDE (
     id_progetto NUMBER(10,0) NOT NULL,
@@ -86,7 +90,7 @@ CREATE TABLE PROGETTO_SEDE (
 
     CONSTRAINT chk_posti_disponibili
         CHECK (posti_disponibili >= 0)
-)
+);
 
 CREATE TABLE VOLONTARIO (
     id_volontario NUMBER(10,0) PRIMARY KEY,
@@ -101,7 +105,7 @@ CREATE TABLE VOLONTARIO (
 
     CONSTRAINT chk_email_volontario
         CHECK (REGEXP_LIKE(email, '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'))
-)
+);
 
 CREATE TABLE ASSEGNAZIONE (
     id_assegnazione NUMBER(10,0) PRIMARY KEY,
@@ -152,6 +156,9 @@ CREATE TABLE ASSEGNAZIONE (
     CONSTRAINT chk_stato_assegnazione
         CHECK (stato_assegnazione IN ('ATTIVA', 'CONCLUSA', 'DECADUTA')),
 
+    CONSTRAINT chk_conclusa_con_data_fine
+        CHECK (stato_assegnazione <> 'CONCLUSA' OR data_fine_effettiva IS NOT NULL),
+
     CONSTRAINT chk_ore_settimanali_previste
         CHECK (ore_settimanali_previste > 0),
 
@@ -163,7 +170,7 @@ CREATE TABLE ASSEGNAZIONE (
 
     CONSTRAINT chk_max_malattie_non_retribuite
         CHECK (max_malattie_non_retribuite >= 0)
-)
+);
 
 CREATE TABLE FORMAZIONE (
     id_formazione NUMBER(10,0) PRIMARY KEY,
@@ -183,7 +190,7 @@ CREATE TABLE FORMAZIONE (
 
     CONSTRAINT chk_tipologia_formazione
         CHECK (tipologia IN ('GENERALE', 'SPECIFICA', 'INTEGRATIVA'))
-)
+);
 
 CREATE TABLE ASSEGNAZIONE_FORMAZIONE (
     id_assegnazione NUMBER(10,0) NOT NULL,
@@ -215,7 +222,7 @@ CREATE TABLE ASSEGNAZIONE_FORMAZIONE (
             OR
             (presenza IN ('PRESENTE', 'PARZIALE') AND ore_frequentate > 0)
         )
-)
+);
 
 CREATE TABLE REGISTRO_SERVIZIO (
     id_registro NUMBER(10,0) PRIMARY KEY,
@@ -269,7 +276,7 @@ CREATE TABLE REGISTRO_SERVIZIO (
 
     CONSTRAINT chk_ore_massime_giornaliere
         CHECK (ore_svolte <= 8)
-)
+);
 
 CREATE TABLE MONITORAGGIO (
     id_monitoraggio NUMBER(10,0) PRIMARY KEY,
@@ -291,7 +298,7 @@ CREATE TABLE MONITORAGGIO (
 
     CONSTRAINT chk_esito_monitoraggio
         CHECK (esito IS NULL OR esito IN ('POSITIVO', 'CRITICO', 'NEGATIVO'))
-)
+);
 
 CREATE TABLE RICHIESTA_VARIAZIONE (
     id_richiesta NUMBER(10,0) PRIMARY KEY,
@@ -314,4 +321,9 @@ CREATE TABLE RICHIESTA_VARIAZIONE (
 
     CONSTRAINT chk_stato_richiesta
         CHECK (stato_richiesta IN ('IN_ATTESA', 'APPROVATA', 'RIFIUTATA'))
-)
+);
+
+-- Sequenze per gli identificativi generati dalle procedure.
+-- Partono da 1000: gli ID inferiori sono riservati ai dati di esempio (seed).
+CREATE SEQUENCE seq_formazione START WITH 1000 INCREMENT BY 1 NOCACHE;
+CREATE SEQUENCE seq_monitoraggio START WITH 1000 INCREMENT BY 1 NOCACHE;
