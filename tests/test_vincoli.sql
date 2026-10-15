@@ -7,6 +7,7 @@
 -- =============================================================================
 SET SERVEROUTPUT ON
 SET DEFINE OFF
+SET SQLBLANKLINES ON
 
 DECLARE
     v_ok     PLS_INTEGER := 0;

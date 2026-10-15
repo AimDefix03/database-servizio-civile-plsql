@@ -1,0 +1,17 @@
+# Oracle Database Free per sviluppo e test locali.
+# Le credenziali sono solo per uso locale: non usarle in nessun altro ambiente.
+services:
+  oracle:
+    image: gvenzl/oracle-free:slim
+    container_name: oracle-servizio-civile
+    ports:
+      - "1521:1521"
+    environment:
+      ORACLE_PASSWORD: LocalDevOnly1
+      APP_USER: sc
+      APP_USER_PASSWORD: LocalDevOnly1
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 30

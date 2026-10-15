@@ -248,4 +248,4 @@ VALUES (
     DATE '2025-03-01', DATE '2025-12-31', NULL,
     'ATTIVA', 35,
     15, 10, 10
-); sono corretti? va bene? riesci a comprenderli? ragiona come un professore scrupoloso e pignolo before final.
+);

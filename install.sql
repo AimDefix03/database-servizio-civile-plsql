@@ -6,6 +6,7 @@
 -- CREATE TABLE / SEQUENCE / VIEW / TRIGGER / PROCEDURE / ROLE.
 -- =============================================================================
 SET DEFINE OFF
+SET SQLBLANKLINES ON
 SET SERVEROUTPUT ON
 WHENEVER SQLERROR EXIT FAILURE ROLLBACK
 

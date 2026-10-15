@@ -31,19 +31,25 @@ sqlplus utente/password@//host:1521/servizio @install.sql
 
 Per rimuovere tutto: `@uninstall.sql`.
 
+Se non hai un'istanza Oracle, ne puoi avviare una locale con Docker (`docker compose up -d --wait`, utente `sc`, servizio `FREEPDB1`, porta 1521; credenziali in `docker-compose.yml`, solo per uso locale).
+
 ## Test
 
 ```bash
-sqlplus utente/password@//host:1521/servizio @tests/test_vincoli.sql
+docker compose up -d --wait
+scripts/run-tests.sh
 ```
 
-I test verificano il rifiuto delle operazioni non valide e la decadenza automatica, poi eseguono un `ROLLBACK`.
+Lo script installa il database nel container e lancia `tests/test_vincoli.sql`, che verifica il rifiuto delle operazioni non valide e la decadenza automatica, poi esegue un `ROLLBACK`. Gli stessi passi girano in CI a ogni push ([workflow](.github/workflows/ci.yml)). Testato su Oracle Database Free 23ai.
 
 ## Struttura
 
 ```text
 .
 ├── install.sql / uninstall.sql
+├── docker-compose.yml        Oracle Free per sviluppo locale
+├── scripts/run-tests.sh      installazione + test in container
+├── .github/workflows/ci.yml  CI
 ├── sql/
 │   ├── 01_schema/        tabelle e indici
 │   ├── 02_seed/          dati di esempio (fittizi)
