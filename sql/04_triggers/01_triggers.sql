@@ -1,3 +1,8 @@
+-- =============================================================================
+-- Trigger: vincoli applicativi non esprimibili con i soli CHECK
+-- (-20001 ... -20018: codici d'errore applicativi, vedi docs/regole_di_business.md)
+-- =============================================================================
+
 CREATE OR REPLACE TRIGGER check_assegnazione_attiva
 FOR INSERT OR UPDATE ON ASSEGNAZIONE
 COMPOUND TRIGGER
@@ -47,7 +52,7 @@ BEGIN
             IF v_conteggio > 0 THEN
                 RAISE_APPLICATION_ERROR(
                     -20001,
-                    'Il volontario ha gia una assegnazione attiva nello stesso intervallo temporale.'
+                    'Il volontario ha già una assegnazione attiva nello stesso intervallo temporale.'
                 );
             END IF;
 
@@ -57,6 +62,7 @@ BEGIN
 END AFTER STATEMENT;
 
 END;
+/
 
 CREATE OR REPLACE TRIGGER check_progetto_sede_assegnazione
 BEFORE INSERT OR UPDATE OF id_progetto, id_sede
@@ -74,10 +80,11 @@ BEGIN
     IF v_count = 0 THEN
         RAISE_APPLICATION_ERROR(
             -20002,
-            'La sede indicata non e associata al progetto scelto.'
+            'La sede indicata non è associata al progetto scelto.'
         );
     END IF;
 END;
+/
 
 CREATE OR REPLACE TRIGGER check_storico_variazione
 BEFORE UPDATE OF stato_richiesta
@@ -103,13 +110,17 @@ BEGIN
         IF v_count = 0 THEN
             RAISE_APPLICATION_ERROR(
                 -20003,
-                'La richiesta non puo essere approvata: la vecchia assegnazione deve essere conclusa e deve esistere una nuova assegnazione collegata correttamente.'
+                'La richiesta non può essere approvata: la vecchia assegnazione deve essere conclusa e deve esistere una nuova assegnazione collegata correttamente.'
             );
         END IF;
 
     END IF;
 END;
+/
 
+-- La giornata deve cadere nel periodo dell'assegnazione. Lo stato non conta:
+-- le assegnazioni concluse o decadute hanno una data di fine effettiva, e
+-- devono poter ricevere le giornate del loro periodo (storico).
 CREATE OR REPLACE TRIGGER check_presenza_assegnazione_attiva
 BEFORE INSERT OR UPDATE OF id_assegnazione, data_servizio
 ON REGISTRO_SERVIZIO
@@ -121,17 +132,17 @@ BEGIN
     INTO v_count
     FROM ASSEGNAZIONE
     WHERE id_assegnazione = :NEW.id_assegnazione
-      AND stato_assegnazione = 'ATTIVA'
       AND :NEW.data_servizio >= data_inizio
       AND :NEW.data_servizio <= NVL(data_fine_effettiva, NVL(data_fine_prevista, DATE '9999-12-31'));
 
     IF v_count = 0 THEN
         RAISE_APPLICATION_ERROR(
             -20004,
-            'La presenza puo essere registrata solo per una assegnazione attiva e valida nella data indicata.'
+            'La presenza può essere registrata solo per una assegnazione esistente e valida nella data indicata.'
         );
     END IF;
 END;
+/
 
 CREATE OR REPLACE TRIGGER check_permesso_straordinario_valido
 BEFORE INSERT OR UPDATE OF tipo_giornata, note
@@ -148,157 +159,7 @@ BEGIN
 
     END IF;
 END;
-
-CREATE OR REPLACE TRIGGER check_limite_malattia_non_retribuita
-FOR INSERT OR UPDATE ON REGISTRO_SERVIZIO
-COMPOUND TRIGGER
-
-    TYPE t_id_assegnazione IS TABLE OF REGISTRO_SERVIZIO.id_assegnazione%TYPE INDEX BY PLS_INTEGER;
-
-    v_ids_assegnazione t_id_assegnazione;
-    v_indice PLS_INTEGER := 0;
-
-AFTER EACH ROW IS
-BEGIN
-    v_indice := v_indice + 1;
-    v_ids_assegnazione(v_indice) := :NEW.id_assegnazione;
-END AFTER EACH ROW;
-
-AFTER STATEMENT IS
-    v_totale_malattie NUMBER;
-    v_max_malattie NUMBER;
-BEGIN
-    FOR i IN 1 .. v_indice LOOP
-
-        SELECT COUNT(*)
-        INTO v_totale_malattie
-        FROM REGISTRO_SERVIZIO
-        WHERE id_assegnazione = v_ids_assegnazione(i)
-          AND tipo_giornata = 'MALATTIA_NON_RETRIBUITA';
-
-        SELECT max_malattie_non_retribuite
-        INTO v_max_malattie
-        FROM ASSEGNAZIONE
-        WHERE id_assegnazione = v_ids_assegnazione(i);
-
-        IF v_totale_malattie > v_max_malattie THEN
-
-            UPDATE ASSEGNAZIONE
-            SET stato_assegnazione = 'DECADUTA',
-                data_fine_effettiva = NVL(data_fine_effettiva, SYSDATE)
-            WHERE id_assegnazione = v_ids_assegnazione(i)
-              AND stato_assegnazione <> 'DECADUTA';
-
-        END IF;
-
-    END LOOP;
-END AFTER STATEMENT;
-
-END;
-
-CREATE OR REPLACE TRIGGER check_limite_malattia_retribuita
-FOR INSERT OR UPDATE ON REGISTRO_SERVIZIO
-COMPOUND TRIGGER
-
-    TYPE t_id_assegnazione IS TABLE OF REGISTRO_SERVIZIO.id_assegnazione%TYPE INDEX BY PLS_INTEGER;
-
-    v_ids_assegnazione t_id_assegnazione;
-    v_indice PLS_INTEGER := 0;
-
-AFTER EACH ROW IS
-BEGIN
-    v_indice := v_indice + 1;
-    v_ids_assegnazione(v_indice) := :NEW.id_assegnazione;
-END AFTER EACH ROW;
-
-AFTER STATEMENT IS
-    v_totale_malattie NUMBER;
-    v_max_malattie NUMBER;
-BEGIN
-    FOR i IN 1 .. v_indice LOOP
-
-        SELECT COUNT(*)
-        INTO v_totale_malattie
-        FROM REGISTRO_SERVIZIO
-        WHERE id_assegnazione = v_ids_assegnazione(i)
-          AND tipo_giornata = 'MALATTIA_RETRIBUITA';
-
-        SELECT max_malattie_retribuite
-        INTO v_max_malattie
-        FROM ASSEGNAZIONE
-        WHERE id_assegnazione = v_ids_assegnazione(i);
-
-        IF v_totale_malattie > v_max_malattie THEN
-
-            UPDATE ASSEGNAZIONE
-            SET stato_assegnazione = 'DECADUTA',
-                data_fine_effettiva = NVL(data_fine_effettiva, SYSDATE)
-            WHERE id_assegnazione = v_ids_assegnazione(i)
-              AND stato_assegnazione <> 'DECADUTA';
-
-        END IF;
-
-    END LOOP;
-END AFTER STATEMENT;
-
-END;
-
-CREATE OR REPLACE TRIGGER check_limite_permessi_ordinari
-FOR INSERT OR UPDATE ON REGISTRO_SERVIZIO
-COMPOUND TRIGGER
-
-    TYPE t_id_assegnazione IS TABLE OF REGISTRO_SERVIZIO.id_assegnazione%TYPE INDEX BY PLS_INTEGER;
-
-    v_ids_assegnazione t_id_assegnazione;
-    v_indice PLS_INTEGER := 0;
-
-AFTER EACH ROW IS
-BEGIN
-    v_indice := v_indice + 1;
-    v_ids_assegnazione(v_indice) := :NEW.id_assegnazione;
-END AFTER EACH ROW;
-
-AFTER STATEMENT IS
-    v_totale_permessi NUMBER;
-    v_max_permessi NUMBER;
-BEGIN
-    FOR i IN 1 .. v_indice LOOP
-
-        SELECT COUNT(*)
-        INTO v_totale_permessi
-        FROM REGISTRO_SERVIZIO
-        WHERE id_assegnazione = v_ids_assegnazione(i)
-          AND tipo_giornata = 'PERMESSO_ORDINARIO';
-
-        SELECT max_permessi_ordinari
-        INTO v_max_permessi
-        FROM ASSEGNAZIONE
-        WHERE id_assegnazione = v_ids_assegnazione(i);
-
-        IF v_totale_permessi > v_max_permessi THEN
-
-            UPDATE ASSEGNAZIONE
-            SET stato_assegnazione = 'DECADUTA',
-                data_fine_effettiva = NVL(data_fine_effettiva, SYSDATE)
-            WHERE id_assegnazione = v_ids_assegnazione(i)
-              AND stato_assegnazione <> 'DECADUTA';
-
-        END IF;
-
-    END LOOP;
-END AFTER STATEMENT;
-
-END;
-
-CREATE OR REPLACE TRIGGER check_limite_ore_giornaliere
-BEFORE INSERT OR UPDATE OF ore_svolte
-ON REGISTRO_SERVIZIO
-FOR EACH ROW
-BEGIN
-    IF :NEW.ore_svolte > 8 THEN
-        :NEW.ore_svolte := 8;
-    END IF;
-END;
+/
 
 CREATE OR REPLACE TRIGGER check_monitoraggio_assegnazione_valida
 BEFORE INSERT OR UPDATE OF id_assegnazione, data_monitoraggio
@@ -321,6 +182,7 @@ BEGIN
         );
     END IF;
 END;
+/
 
 CREATE OR REPLACE TRIGGER check_coerenza_tipo_giornata_ore
 BEFORE INSERT OR UPDATE OF tipo_giornata, ore_svolte
@@ -345,3 +207,46 @@ BEGIN
         );
     END IF;
 END;
+/
+
+CREATE OR REPLACE TRIGGER check_limiti_assenze
+FOR INSERT OR UPDATE ON REGISTRO_SERVIZIO
+COMPOUND TRIGGER
+
+    -- Assegnazioni toccate dallo statement (chiave = id, senza duplicati)
+    TYPE t_ids IS TABLE OF PLS_INTEGER INDEX BY PLS_INTEGER;
+    v_ids t_ids;
+
+AFTER EACH ROW IS
+BEGIN
+    v_ids(:NEW.id_assegnazione) := 1;
+END AFTER EACH ROW;
+
+AFTER STATEMENT IS
+    v_id PLS_INTEGER := v_ids.FIRST;
+BEGIN
+    -- Un'assegnazione decade quando supera uno dei limiti di assenza
+    -- (permessi ordinari, malattie retribuite, malattie non retribuite).
+    WHILE v_id IS NOT NULL LOOP
+        UPDATE ASSEGNAZIONE a
+        SET a.stato_assegnazione = 'DECADUTA',
+            a.data_fine_effettiva = NVL(a.data_fine_effettiva, TRUNC(SYSDATE))
+        WHERE a.id_assegnazione = v_id
+          AND a.stato_assegnazione <> 'DECADUTA'
+          AND (
+                (SELECT COUNT(*) FROM REGISTRO_SERVIZIO r
+                  WHERE r.id_assegnazione = a.id_assegnazione
+                    AND r.tipo_giornata = 'PERMESSO_ORDINARIO') > a.max_permessi_ordinari
+             OR (SELECT COUNT(*) FROM REGISTRO_SERVIZIO r
+                  WHERE r.id_assegnazione = a.id_assegnazione
+                    AND r.tipo_giornata = 'MALATTIA_RETRIBUITA') > a.max_malattie_retribuite
+             OR (SELECT COUNT(*) FROM REGISTRO_SERVIZIO r
+                  WHERE r.id_assegnazione = a.id_assegnazione
+                    AND r.tipo_giornata = 'MALATTIA_NON_RETRIBUITA') > a.max_malattie_non_retribuite
+          );
+        v_id := v_ids.NEXT(v_id);
+    END LOOP;
+END AFTER STATEMENT;
+
+END;
+/

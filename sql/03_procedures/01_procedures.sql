@@ -1,3 +1,10 @@
+-- =============================================================================
+-- Procedure di gestione (PL/SQL)
+-- Ogni procedura valida gli input ed esegue l'operazione. La transazione è
+-- gestita dal chiamante (nessun COMMIT/ROLLBACK interno): le procedure sono
+-- componibili e testabili con ROLLBACK.
+-- =============================================================================
+
 CREATE OR REPLACE PROCEDURE disattiva_progetto (
     p_id_progetto   IN NUMBER,
     p_motivazione   IN VARCHAR2
@@ -27,7 +34,7 @@ BEGIN
     WHERE id_progetto = p_id_progetto;
 
     IF UPPER(TRIM(v_stato_progetto)) = 'SOSPESO' THEN
-        RAISE_APPLICATION_ERROR(-20042, 'Il progetto risulta gia disattivato.');
+        RAISE_APPLICATION_ERROR(-20042, 'Il progetto risulta già disattivato.');
     END IF;
 
     SELECT COUNT(*)
@@ -39,7 +46,7 @@ BEGIN
     IF v_count_assegnazioni > 0 THEN
         RAISE_APPLICATION_ERROR(
             -20043,
-            'Non e possibile disattivare il progetto: esistono assegnazioni attive collegate.'
+            'Non è possibile disattivare il progetto: esistono assegnazioni attive collegate.'
         );
     END IF;
 
@@ -52,75 +59,13 @@ BEGIN
     SET stato_progetto = 'SOSPESO'
     WHERE id_progetto = p_id_progetto;
 
-    COMMIT;
-
     DBMS_OUTPUT.PUT_LINE(
         'Progetto disattivato con successo. ID progetto: ' || p_id_progetto ||
         '. Sedi collegate mantenute: ' || v_count_sedi ||
         '. Motivazione: ' || p_motivazione
     );
-
-EXCEPTION
-    WHEN OTHERS THEN
-        ROLLBACK;
-        RAISE;
 END;
-
-CREATE OR REPLACE PROCEDURE disattiva_progetto (
-    p_id_progetto IN NUMBER
-)
-AS
-    v_count_progetto         NUMBER;
-    v_stato_progetto         PROGETTO.stato_progetto%TYPE;
-    v_count_assegnazioni     NUMBER;
-BEGIN
-    IF p_id_progetto IS NULL THEN
-        RAISE_APPLICATION_ERROR(-20040, 'Identificativo del progetto mancante.');
-    END IF;
-
-    SELECT COUNT(*)
-    INTO v_count_progetto
-    FROM PROGETTO
-    WHERE id_progetto = p_id_progetto;
-
-    IF v_count_progetto = 0 THEN
-        RAISE_APPLICATION_ERROR(-20041, 'Il progetto indicato non esiste.');
-    END IF;
-
-    SELECT stato_progetto
-    INTO v_stato_progetto
-    FROM PROGETTO
-    WHERE id_progetto = p_id_progetto;
-
-    IF UPPER(TRIM(v_stato_progetto)) = 'SOSPESO' THEN
-        RAISE_APPLICATION_ERROR(-20042, 'Il progetto risulta gia disattivato.');
-    END IF;
-
-    SELECT COUNT(*)
-    INTO v_count_assegnazioni
-    FROM ASSEGNAZIONE
-    WHERE id_progetto = p_id_progetto
-      AND stato_assegnazione = 'ATTIVA';
-
-    IF v_count_assegnazioni > 0 THEN
-        RAISE_APPLICATION_ERROR(
-            -20043,
-            'Non e possibile disattivare il progetto: esistono assegnazioni attive collegate.'
-        );
-    END IF;
-
-    UPDATE PROGETTO
-    SET stato_progetto = 'SOSPESO'
-    WHERE id_progetto = p_id_progetto;
-
-    COMMIT;
-    DBMS_OUTPUT.PUT_LINE('Progetto disattivato con successo. ID progetto: ' || p_id_progetto);
-
-EXCEPTION
-    WHEN OTHERS THEN
-        ROLLBACK;
-        RAISE;
-END;
+/
 
 CREATE OR REPLACE PROCEDURE registra_formazione (
     p_titolo_formazione        IN VARCHAR2,
@@ -152,7 +97,7 @@ BEGIN
     END IF;
 
     IF p_data_formazione > TRUNC(SYSDATE) THEN
-        RAISE_APPLICATION_ERROR(-20114, 'La data della formazione non puo essere successiva alla data corrente.');
+        RAISE_APPLICATION_ERROR(-20114, 'La data della formazione non può esserè successiva alla data corrente.');
     END IF;
 
     SELECT COUNT(*)
@@ -164,9 +109,9 @@ BEGIN
         RAISE_APPLICATION_ERROR(-20113, 'L''operatore indicato non esiste.');
     END IF;
 
-    SELECT NVL(MAX(id_formazione), 0) + 1
+    SELECT seq_formazione.NEXTVAL
     INTO v_id_formazione
-    FROM FORMAZIONE;
+    FROM DUAL;
 
     INSERT INTO FORMAZIONE (
         id_formazione,
@@ -187,17 +132,11 @@ BEGIN
         p_descrizione_formazione
     );
 
-    COMMIT;
-
     DBMS_OUTPUT.PUT_LINE(
         'Formazione registrata con successo. ID formazione: ' || v_id_formazione
     );
-
-EXCEPTION
-    WHEN OTHERS THEN
-        ROLLBACK;
-        RAISE;
 END;
+/
 
 CREATE OR REPLACE PROCEDURE registra_partecipazione_formazione (
     p_id_assegnazione    IN NUMBER,
@@ -252,7 +191,7 @@ BEGIN
     IF v_count > 0 THEN
         RAISE_APPLICATION_ERROR(
             -20123,
-            'La partecipazione alla formazione risulta gia registrata.'
+            'La partecipazione alla formazione risulta già registrata.'
         );
     END IF;
 
@@ -301,19 +240,13 @@ BEGIN
         p_note
     );
 
-    COMMIT;
-
     DBMS_OUTPUT.PUT_LINE(
         'Partecipazione alla formazione registrata con successo. Assegnazione: '
         || p_id_assegnazione ||
         ', formazione: ' || p_id_formazione
     );
-
-EXCEPTION
-    WHEN OTHERS THEN
-        ROLLBACK;
-        RAISE;
 END;
+/
 
 CREATE OR REPLACE PROCEDURE registra_monitoraggio (
     p_id_assegnazione        IN NUMBER,
@@ -363,7 +296,7 @@ BEGIN
     IF p_data_monitoraggio < v_data_inizio THEN
         RAISE_APPLICATION_ERROR(
             -20132,
-            'La data del monitoraggio non puo essere precedente alla data di inizio dell''assegnazione.'
+            'La data del monitoraggio non può essere precedente alla data di inizio dell''assegnazione.'
         );
     END IF;
 
@@ -371,7 +304,7 @@ BEGIN
        AND p_data_monitoraggio > v_data_fine_effettiva THEN
         RAISE_APPLICATION_ERROR(
             -20133,
-            'La data del monitoraggio e successiva alla fine effettiva dell''assegnazione.'
+            'La data del monitoraggio è successiva alla fine effettiva dell''assegnazione.'
         );
     END IF;
 
@@ -380,7 +313,7 @@ BEGIN
        AND p_data_monitoraggio > v_data_fine_prevista THEN
         RAISE_APPLICATION_ERROR(
             -20134,
-            'La data del monitoraggio e successiva alla fine prevista dell''assegnazione.'
+            'La data del monitoraggio è successiva alla fine prevista dell''assegnazione.'
         );
     END IF;
 
@@ -398,9 +331,9 @@ BEGIN
         );
     END IF;
 
-    SELECT NVL(MAX(id_monitoraggio), 0) + 1
+    SELECT seq_monitoraggio.NEXTVAL
     INTO v_id_monitoraggio
-    FROM MONITORAGGIO;
+    FROM DUAL;
 
     INSERT INTO MONITORAGGIO (
         id_monitoraggio,
@@ -419,35 +352,8 @@ BEGIN
         p_note
     );
 
-    COMMIT;
-
     DBMS_OUTPUT.PUT_LINE(
         'Monitoraggio registrato con successo. ID monitoraggio: ' || v_id_monitoraggio
     );
-
-EXCEPTION
-    WHEN OTHERS THEN
-        ROLLBACK;
-        RAISE;
 END;
-
-CREATE OR REPLACE VIEW Presenze_Da_Validare AS
-SELECT
-    rs.id_registro,
-    rs.data_servizio,
-    rs.tipo_giornata,
-    rs.ore_svolte,
-    rs.ore_da_recuperare,
-    rs.stato_validazione,
-    v.id_volontario,
-    v.nome,
-    v.cognome,
-    a.id_assegnazione,
-    a.id_progetto,
-    a.id_sede
-FROM REGISTRO_SERVIZIO rs
-JOIN ASSEGNAZIONE a
-    ON rs.id_assegnazione = a.id_assegnazione
-JOIN VOLONTARIO v
-    ON a.id_volontario = v.id_volontario
-WHERE rs.stato_validazione = 'DA_VALIDARE'
+/

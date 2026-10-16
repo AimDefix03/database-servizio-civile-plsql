@@ -1,3 +1,7 @@
+-- =============================================================================
+-- Vista: registrazioni di servizio ancora da validare, con dati del volontario
+-- =============================================================================
+
 CREATE OR REPLACE VIEW Presenze_Da_Validare AS
 SELECT
     rs.id_registro,

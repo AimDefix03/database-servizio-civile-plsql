@@ -1,0 +1,15 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test-oracle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Avvia Oracle Free
+        run: docker compose up -d --wait
+      - name: Installa il database ed esegui i test
+        run: scripts/run-tests.sh

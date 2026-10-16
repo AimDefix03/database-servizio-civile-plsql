@@ -13,3 +13,8 @@ __MACOSX/
 # Temporary files
 tmp/
 temp/
+
+# Oracle / client
+*.lst
+*.bak
+*.dmp
