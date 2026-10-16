@@ -31,6 +31,12 @@ GRANT EXECUTE ON disattiva_progetto TO ruolo_amministratore;
 GRANT EXECUTE ON registra_formazione TO ruolo_amministratore;
 GRANT EXECUTE ON registra_partecipazione_formazione TO ruolo_amministratore;
 GRANT EXECUTE ON registra_monitoraggio TO ruolo_amministratore;
+GRANT EXECUTE ON crea_progetto TO ruolo_amministratore;
+GRANT EXECUTE ON modifica_progetto TO ruolo_amministratore;
+GRANT EXECUTE ON crea_assegnazione TO ruolo_amministratore;
+GRANT EXECUTE ON gestisci_richiesta_variazione TO ruolo_amministratore;
+GRANT EXECUTE ON valida_presenza TO ruolo_amministratore;
+GRANT EXECUTE ON inserisci_presenza TO ruolo_amministratore;
 
 -- Operatore: consulta le anagrafiche, gestisce formazione e monitoraggi
 GRANT SELECT ON VOLONTARIO TO ruolo_operatore;
@@ -54,3 +60,4 @@ GRANT SELECT ON ASSEGNAZIONE_FORMAZIONE TO ruolo_volontario;
 GRANT SELECT ON MONITORAGGIO TO ruolo_volontario;
 GRANT SELECT ON RICHIESTA_VARIAZIONE TO ruolo_volontario;
 GRANT SELECT, INSERT, UPDATE ON REGISTRO_SERVIZIO TO ruolo_volontario;
+GRANT EXECUTE ON inserisci_presenza TO ruolo_volontario;

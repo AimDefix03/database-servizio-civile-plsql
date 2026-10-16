@@ -5,6 +5,13 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 ## [Non rilasciato]
 
 ### Aggiunto
+- Le sei procedure descritte nella relazione ma assenti dal repository: `crea_progetto`, `modifica_progetto`, `crea_assegnazione`, `gestisci_richiesta_variazione`, `valida_presenza`, `inserisci_presenza`, più la funzione di supporto `parse_lista_sedi`. Riscritte nello stile delle altre (errori con `RAISE_APPLICATION_ERROR`, nessun `COMMIT`, ID da sequenze `seq_progetto`, `seq_assegnazione`, `seq_registro`).
+- `crea_assegnazione` controlla anche i posti disponibili della coppia progetto-sede.
+- Test: da 19 a 48 casi.
+
+## [1.0.0] - 2026-10-16
+
+### Aggiunto
 - `install.sql` e `uninstall.sql` per installare/rimuovere l'intero database.
 - Indici sulle chiavi esterne (`sql/01_schema/02_indexes.sql`).
 - Sequenze `seq_formazione` e `seq_monitoraggio`.

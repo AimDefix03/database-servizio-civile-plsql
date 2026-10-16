@@ -15,6 +15,8 @@ DECLARE
     v_stato  ASSEGNAZIONE.stato_assegnazione%TYPE;
     v_n      PLS_INTEGER;
     v_idf    FORMAZIONE.id_formazione%TYPE;
+    v_idp    PROGETTO.id_progetto%TYPE;
+    v_ida    ASSEGNAZIONE.id_assegnazione%TYPE;
 
     PROCEDURE esito(p_nome IN VARCHAR2, p_condizione IN BOOLEAN) IS
     BEGIN
@@ -128,6 +130,122 @@ BEGIN
                                    ore_svolte, stato_validazione)
     VALUES (9006, 3, DATE '2025-03-03', 'SERVIZIO', 6, 'VALIDATA');
     esito('Giornata nel periodo di un''assegnazione conclusa (storico)', TRUE);
+
+    -- ---- crea_progetto / modifica_progetto -----------------------------------
+    crea_progetto(1, 'Progetto test', 'ASSISTENZA', 'test', DATE '2026-01-01', NULL, 'ATTIVO', '1,2', 3);
+    SELECT seq_progetto.CURRVAL INTO v_idp FROM DUAL;
+    SELECT COUNT(*) INTO v_n FROM PROGETTO_SEDE WHERE id_progetto = v_idp AND posti_disponibili = 3;
+    esito('crea_progetto crea il progetto con le sue due sedi', v_n = 2);
+
+    attendi_errore('crea_progetto: sede duplicata nella lista', -20151,
+        q'[BEGIN crea_progetto(1,'T','ASSISTENZA','d',DATE '2026-01-01',NULL,'ATTIVO','1,1',3); END;]');
+    attendi_errore('crea_progetto: sede di un altro ente', -20153,
+        q'[BEGIN crea_progetto(1,'T','ASSISTENZA','d',DATE '2026-01-01',NULL,'ATTIVO','4',3); END;]');
+    attendi_errore('crea_progetto: stato non valido', -20158,
+        q'[BEGIN crea_progetto(1,'T','ASSISTENZA','d',DATE '2026-01-01',NULL,'XXX','1',3); END;]');
+    attendi_errore('crea_progetto: ente inesistente', -20159,
+        q'[BEGIN crea_progetto(9999,'T','ASSISTENZA','d',DATE '2026-01-01',NULL,'ATTIVO','1',3); END;]');
+
+    modifica_progetto(v_idp, 'Progetto test 2', 'ASSISTENZA', 'test', DATE '2026-01-01', NULL, 'ATTIVO', '2', 5);
+    SELECT COUNT(*) INTO v_n FROM PROGETTO_SEDE WHERE id_progetto = v_idp AND id_sede = 2 AND posti_disponibili = 5;
+    esito('modifica_progetto aggiorna le sedi del progetto', v_n = 1);
+
+    attendi_errore('modifica_progetto: rimozione di una sede gia'' usata', -20025,
+        q'[BEGIN modifica_progetto(1,'T','ASSISTENZA','d',DATE '2025-01-10',NULL,'ATTIVO','2',3); END;]');
+
+    -- ---- crea_assegnazione ---------------------------------------------------
+    INSERT INTO VOLONTARIO (id_volontario, nome, cognome, codice_fiscale, data_nascita, email,
+                            comune_residenza, stato_volontario)
+    VALUES (9002, 'Test', 'Procedure', 'TSTPRC00A01H501Y', DATE '2000-01-01', 'test2@example.it',
+            'Napoli', 'ATTIVO');
+
+    attendi_errore('crea_assegnazione: sovrapposizione con assegnazione attiva', -20060,
+        q'[BEGIN crea_assegnazione(1,1,1,DATE '2025-06-01',DATE '2025-09-30','ATTIVA',35,15,10,10); END;]');
+    attendi_errore('crea_assegnazione: sede non associata al progetto', -20059,
+        q'[BEGIN crea_assegnazione(9002,4,1,DATE '2026-01-01',DATE '2026-12-31','ATTIVA',35,15,10,10); END;]');
+    attendi_errore('crea_assegnazione: stato diverso da ATTIVA', -20054,
+        q'[BEGIN crea_assegnazione(9002,1,1,DATE '2026-01-01',DATE '2026-12-31','CONCLUSA',35,15,10,10); END;]');
+
+    crea_progetto(1, 'Progetto sospeso', 'ASSISTENZA', 'test', DATE '2026-01-01', NULL, 'SOSPESO', '1', 2);
+    SELECT seq_progetto.CURRVAL INTO v_idp FROM DUAL;
+    attendi_errore('crea_assegnazione: progetto sospeso', -20057,
+        'BEGIN crea_assegnazione(9002,' || v_idp || q'[,1,DATE '2026-01-01',DATE '2026-12-31','ATTIVA',35,15,10,10); END;]');
+
+    crea_progetto(1, 'Progetto senza posti', 'ASSISTENZA', 'test', DATE '2026-01-01', NULL, 'ATTIVO', '1', 0);
+    SELECT seq_progetto.CURRVAL INTO v_idp FROM DUAL;
+    attendi_errore('crea_assegnazione: posti esauriti', -20066,
+        'BEGIN crea_assegnazione(9002,' || v_idp || q'[,1,DATE '2026-01-01',DATE '2026-12-31','ATTIVA',35,15,10,10); END;]');
+
+    crea_assegnazione(9002, 1, 1, DATE '2026-01-01', DATE '2026-12-31', 'ATTIVA', 35, 15, 10, 10);
+    SELECT seq_assegnazione.CURRVAL INTO v_ida FROM DUAL;
+    SELECT COUNT(*) INTO v_n FROM ASSEGNAZIONE
+     WHERE id_assegnazione = v_ida AND stato_assegnazione = 'ATTIVA' AND data_fine_effettiva IS NULL;
+    esito('crea_assegnazione crea un''assegnazione attiva', v_n = 1);
+
+    -- ---- gestisci_richiesta_variazione ---------------------------------------
+    INSERT INTO RICHIESTA_VARIAZIONE (id_richiesta, id_assegnazione, data_richiesta, tipo_variazione,
+                                      motivazione, stato_richiesta)
+    VALUES (9101, v_ida, DATE '2026-05-01', 'CAMBIO_SEDE', 'test', 'IN_ATTESA');
+    INSERT INTO RICHIESTA_VARIAZIONE (id_richiesta, id_assegnazione, data_richiesta, tipo_variazione,
+                                      motivazione, stato_richiesta)
+    VALUES (9102, v_ida, DATE '2026-05-01', 'CAMBIO_PROGETTO', 'test', 'IN_ATTESA');
+
+    attendi_errore('gestisci_richiesta: stato finale non valido', -20071,
+        q'[BEGIN gestisci_richiesta_variazione(9101,'FORSE',DATE '2026-05-15'); END;]');
+    attendi_errore('gestisci_richiesta: approvazione senza nuova sede', -20074,
+        q'[BEGIN gestisci_richiesta_variazione(9101,'APPROVATA',DATE '2026-05-15',1,NULL,DATE '2026-06-01'); END;]');
+    attendi_errore('gestisci_richiesta: tipo CAMBIO_PROGETTO con stesso progetto', -20078,
+        q'[BEGIN gestisci_richiesta_variazione(9102,'APPROVATA',DATE '2026-05-15',1,2,DATE '2026-06-01'); END;]');
+
+    gestisci_richiesta_variazione(9101, 'APPROVATA', DATE '2026-05-15', 1, 2, DATE '2026-06-01');
+    SELECT COUNT(*) INTO v_n
+    FROM ASSEGNAZIONE vecchia
+    JOIN ASSEGNAZIONE nuova ON nuova.id_assegnazione_precedente = vecchia.id_assegnazione
+    WHERE vecchia.id_assegnazione = v_ida
+      AND vecchia.stato_assegnazione = 'CONCLUSA'
+      AND vecchia.data_fine_effettiva = DATE '2026-05-31'
+      AND nuova.id_sede = 2 AND nuova.data_inizio = DATE '2026-06-01' AND nuova.stato_assegnazione = 'ATTIVA';
+    esito('gestisci_richiesta: approvazione chiude la vecchia assegnazione e ne crea una nuova', v_n = 1);
+
+    SELECT COUNT(*) INTO v_n FROM RICHIESTA_VARIAZIONE
+     WHERE id_richiesta = 9101 AND stato_richiesta = 'APPROVATA';
+    esito('gestisci_richiesta: la richiesta risulta approvata', v_n = 1);
+
+    attendi_errore('gestisci_richiesta: richiesta gia'' valutata', -20073,
+        q'[BEGIN gestisci_richiesta_variazione(9101,'RIFIUTATA',DATE '2026-05-20'); END;]');
+
+    gestisci_richiesta_variazione(9102, 'RIFIUTATA', DATE '2026-05-20');
+    SELECT COUNT(*) INTO v_n FROM RICHIESTA_VARIAZIONE
+     WHERE id_richiesta = 9102 AND stato_richiesta = 'RIFIUTATA' AND data_validazione = DATE '2026-05-20';
+    esito('gestisci_richiesta: il rifiuto aggiorna solo la richiesta', v_n = 1);
+
+    -- ---- inserisci_presenza / valida_presenza --------------------------------
+    inserisci_presenza(1, DATE '2025-07-01', 'SERVIZIO', 6, 0, 'test');
+    SELECT COUNT(*) INTO v_n FROM REGISTRO_SERVIZIO
+     WHERE id_assegnazione = 1 AND data_servizio = DATE '2025-07-01' AND stato_validazione = 'DA_VALIDARE';
+    esito('inserisci_presenza registra la giornata da validare', v_n = 1);
+
+    attendi_errore('inserisci_presenza: giornata duplicata', -20146,
+        q'[BEGIN inserisci_presenza(1,DATE '2025-07-01','SERVIZIO',6,0); END;]');
+    attendi_errore('inserisci_presenza: volontario senza assegnazione attiva', -20145,
+        q'[BEGIN inserisci_presenza(9002,DATE '2020-01-01','SERVIZIO',6,0); END;]');
+    attendi_errore('inserisci_presenza: piu'' di 8 ore', -20147,
+        q'[BEGIN inserisci_presenza(1,DATE '2025-07-02','SERVIZIO',9,0); END;]');
+    attendi_errore('inserisci_presenza: tipo di giornata non valido', -20142,
+        q'[BEGIN inserisci_presenza(1,DATE '2025-07-02','FERIE',0,0); END;]');
+
+    attendi_errore('valida_presenza: esito non valido', -20091,
+        q'[BEGIN valida_presenza(1,DATE '2025-07-01','BOH'); END;]');
+    attendi_errore('valida_presenza: presenza inesistente', -20096,
+        q'[BEGIN valida_presenza(1,DATE '2025-07-15','VALIDATA'); END;]');
+    attendi_errore('valida_presenza: correzione con ore incoerenti', -20098,
+        q'[BEGIN valida_presenza(1,DATE '2025-07-01','VALIDATA','PERMESSO_ORDINARIO',5,0); END;]');
+
+    valida_presenza(1, DATE '2025-07-01', 'VALIDATA', NULL, 7, NULL, 'corretta');
+    SELECT COUNT(*) INTO v_n FROM REGISTRO_SERVIZIO
+     WHERE id_assegnazione = 1 AND data_servizio = DATE '2025-07-01'
+       AND stato_validazione = 'VALIDATA' AND ore_svolte = 7 AND note = 'corretta';
+    esito('valida_presenza valida e corregge le ore', v_n = 1);
 
     -- Decadenza automatica: assegnazione con 0 permessi ordinari consentiti
     INSERT INTO VOLONTARIO (id_volontario, nome, cognome, codice_fiscale, data_nascita, email,
