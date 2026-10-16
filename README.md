@@ -40,7 +40,7 @@ docker compose up -d --wait
 scripts/run-tests.sh
 ```
 
-Lo script installa il database nel container e lancia `tests/test_vincoli.sql` (19 casi: rifiuto delle operazioni non valide, esito delle procedure, decadenza automatica), poi esegue un `ROLLBACK`. Gli stessi passi girano in CI a ogni push ([workflow](.github/workflows/ci.yml)). Testato su Oracle Database Free 23ai.
+Lo script installa il database nel container e lancia `tests/test_vincoli.sql` (48 casi: rifiuto delle operazioni non valide, casi di successo e di errore di tutte le procedure, decadenza automatica), poi esegue un `ROLLBACK`. Gli stessi passi girano in CI a ogni push ([workflow](.github/workflows/ci.yml)). Testato su Oracle Database Free 23ai.
 
 ## Struttura
 

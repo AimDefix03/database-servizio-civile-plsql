@@ -17,7 +17,17 @@ BEGIN
             SELECT 'PROCEDURE', 'registra_partecipazione_formazione' FROM DUAL UNION ALL
             SELECT 'PROCEDURE', 'registra_monitoraggio' FROM DUAL UNION ALL
             SELECT 'SEQUENCE', 'seq_formazione' FROM DUAL UNION ALL
-            SELECT 'SEQUENCE', 'seq_monitoraggio' FROM DUAL
+            SELECT 'SEQUENCE', 'seq_monitoraggio' FROM DUAL UNION ALL
+            SELECT 'SEQUENCE', 'seq_progetto' FROM DUAL UNION ALL
+            SELECT 'SEQUENCE', 'seq_assegnazione' FROM DUAL UNION ALL
+            SELECT 'SEQUENCE', 'seq_registro' FROM DUAL UNION ALL
+            SELECT 'FUNCTION', 'parse_lista_sedi' FROM DUAL UNION ALL
+            SELECT 'PROCEDURE', 'crea_progetto' FROM DUAL UNION ALL
+            SELECT 'PROCEDURE', 'modifica_progetto' FROM DUAL UNION ALL
+            SELECT 'PROCEDURE', 'crea_assegnazione' FROM DUAL UNION ALL
+            SELECT 'PROCEDURE', 'gestisci_richiesta_variazione' FROM DUAL UNION ALL
+            SELECT 'PROCEDURE', 'inserisci_presenza' FROM DUAL UNION ALL
+            SELECT 'PROCEDURE', 'valida_presenza' FROM DUAL
         )
     ) LOOP
         BEGIN EXECUTE IMMEDIATE o.stmt; EXCEPTION WHEN OTHERS THEN NULL; END;

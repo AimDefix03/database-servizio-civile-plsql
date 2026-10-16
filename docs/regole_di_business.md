@@ -21,9 +21,26 @@ I limiti di assenza sono configurabili per assegnazione
 
 ## Procedure
 
-| Procedura | Scopo |
-|---|---|
-| `disattiva_progetto(id, motivazione)` | Sospende un progetto privo di assegnazioni attive |
-| `registra_formazione(...)` | Registra un evento formativo (ID da `seq_formazione`) |
-| `registra_partecipazione_formazione(...)` | Registra la presenza di un'assegnazione a una formazione |
-| `registra_monitoraggio(...)` | Registra un monitoraggio (ID da `seq_monitoraggio`) |
+Le procedure validano gli input e segnalano gli errori con `RAISE_APPLICATION_ERROR`.
+Non eseguono `COMMIT` né `ROLLBACK`: la transazione è del chiamante.
+
+| Procedura | Scopo | Errori |
+|---|---|---|
+| `crea_progetto(...)` | Crea un progetto e lo collega alle sedi indicate (lista `"1,2,3"`) | `-20150`..`-20159` |
+| `modifica_progetto(...)` | Aggiorna un progetto e le sue sedi; non rimuove sedi già usate da assegnazioni | `-20020`..`-20025`, `-20150`..`-20154` |
+| `disattiva_progetto(id, motivazione)` | Sospende un progetto privo di assegnazioni attive | `-20040`..`-20043` |
+| `crea_assegnazione(...)` | Crea un'assegnazione attiva: controlla periodo, coppia progetto-sede, sovrapposizioni, posti disponibili e assegnazione precedente | `-20050`..`-20067` |
+| `gestisci_richiesta_variazione(...)` | Approva o rifiuta una richiesta; se approvata chiude l'assegnazione corrente (fine = decorrenza - 1) e ne crea una nuova collegata | `-20070`..`-20079` |
+| `inserisci_presenza(...)` | Il volontario registra una giornata (stato iniziale `DA_VALIDARE`) | `-20140`..`-20147` |
+| `valida_presenza(...)` | L'amministratore corregge e valida/rifiuta una giornata | `-20090`..`-20098` |
+| `registra_formazione(...)` | Registra un evento formativo (ID da `seq_formazione`) | `-20110`..`-20114` |
+| `registra_partecipazione_formazione(...)` | Registra la presenza di un'assegnazione a una formazione | `-20120`..`-20127` |
+| `registra_monitoraggio(...)` | Registra un monitoraggio (ID da `seq_monitoraggio`) | `-20130`..`-20136` |
+
+`parse_lista_sedi` è una funzione di supporto usata da `crea_progetto` e `modifica_progetto`.
+
+### Note
+
+- Lo stato iniziale di una richiesta di variazione è `IN_ATTESA` (la relazione lo chiama "pendente").
+- `crea_assegnazione` verifica anche che i posti disponibili della coppia progetto-sede non siano esauriti dalle assegnazioni attive nello stesso periodo.
+- `inserisci_presenza` riceve l'identificativo del volontario come parametro: il collegamento tra utente di database e volontario non è modellato, quindi il controllo che un volontario inserisca solo le proprie presenze spetta all'applicazione.
