@@ -41,15 +41,18 @@ CREATE USER test_vol1 IDENTIFIED BY LocalDevOnly1;
 CREATE USER test_vol2 IDENTIFIED BY LocalDevOnly1;
 CREATE USER test_ope IDENTIFIED BY LocalDevOnly1;
 CREATE USER test_anon IDENTIFIED BY LocalDevOnly1;
-GRANT CREATE SESSION TO test_vol1, test_vol2, test_ope, test_anon;
+CREATE USER test_adm IDENTIFIED BY LocalDevOnly1;
+GRANT CREATE SESSION TO test_vol1, test_vol2, test_ope, test_anon, test_adm;
 GRANT ruolo_volontario TO test_vol1, test_vol2, test_anon;
 GRANT ruolo_operatore TO test_ope;
+GRANT ruolo_amministratore TO test_adm;
 EXIT
 SQL
 sql_as sc/LocalDevOnly1 >/dev/null <<'SQL'
 INSERT INTO UTENTE_APPLICATIVO (username, tipo_utente, id_volontario) VALUES ('TEST_VOL1', 'VOLONTARIO', 1);
 INSERT INTO UTENTE_APPLICATIVO (username, tipo_utente, id_volontario) VALUES ('TEST_VOL2', 'VOLONTARIO', 2);
 INSERT INTO UTENTE_APPLICATIVO (username, tipo_utente, id_operatore) VALUES ('TEST_OPE', 'OPERATORE', 1);
+INSERT INTO UTENTE_APPLICATIVO (username, tipo_utente) VALUES ('TEST_ADM', 'AMMINISTRATORE');
 COMMIT;
 EXIT
 SQL
@@ -61,8 +64,9 @@ sicurezza() { # utente scenario id_proprio id_altro
 sicurezza TEST_VOL1 VOLONTARIO 1 2
 sicurezza TEST_VOL2 VOLONTARIO 2 1
 sicurezza TEST_OPE OPERATORE 1 2
+sicurezza TEST_ADM AMMINISTRATORE 2 1
 sicurezza TEST_ANON NON_REGISTRATO 1 2
-if grep -q "\[KO\]" /tmp/sc_sicurezza.log || [ "$(grep -c 'Falliti: 0' /tmp/sc_sicurezza.log)" != "4" ]; then
+if grep -q "\[KO\]" /tmp/sc_sicurezza.log || [ "$(grep -c 'Falliti: 0' /tmp/sc_sicurezza.log)" != "5" ]; then
     echo "Test di sicurezza falliti"; exit 1
 fi
 

@@ -25,3 +25,7 @@ jobs:
         run: docker compose up -d --wait
       - name: Installa il database ed esegui i test
         run: scripts/run-tests.sh
+      - name: Verifica che la documentazione generata sia allineata al database
+        run: |
+          scripts/genera-documentazione.sh
+          git diff --exit-code docs/

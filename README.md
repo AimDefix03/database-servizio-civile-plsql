@@ -6,7 +6,7 @@
 
 Database Oracle per la gestione amministrativa del Servizio Civile: enti, sedi, progetti, volontari, assegnazioni, registro di servizio, formazione, monitoraggi e variazioni di percorso. Le regole di business sono applicate direttamente dal database tramite vincoli, trigger e procedure PL/SQL.
 
-![Diagramma ER](docs/diagrammi/diagramma_er.png)
+Diagramma entità-relazione aggiornato (generato dal database): [docs/diagramma_er.md](docs/diagramma_er.md). Quello della consegna originale è in [docs/diagrammi/](docs/diagrammi/).
 
 ## Funzionalità
 
@@ -69,7 +69,7 @@ docker compose up -d --wait
 scripts/run-tests.sh
 ```
 
-Lo script installa il database nel container, lancia `tests/test_vincoli.sql`, poi verifica che `uninstall.sql` lasci lo schema vuoto e che la reinstallazione riesca. I test sono 57 casi sui vincoli (ogni trigger e ogni procedura ha almeno un caso di rifiuto e uno di successo) e 38 casi di sicurezza eseguiti con utenti reali (volontario, altro volontario, operatore, utente non registrato), e annullano le modifiche con un `ROLLBACK`. Gli stessi passi girano in CI a ogni push ([workflow](.github/workflows/ci.yml)). Testato su Oracle Database Free 23ai.
+Lo script installa il database nel container, lancia `tests/test_vincoli.sql`, poi verifica che `uninstall.sql` lasci lo schema vuoto e che la reinstallazione riesca. I test sono 65 casi sui vincoli, sulle procedure e sull'audit (ogni trigger e ogni procedura ha almeno un caso di rifiuto e uno di successo) e 49 casi di sicurezza eseguiti con utenti reali (volontario, altro volontario, operatore, amministratore, utente non registrato), e annullano le modifiche con un `ROLLBACK`. Gli stessi passi girano in CI a ogni push ([workflow](.github/workflows/ci.yml)), insieme al lint e alla verifica che la documentazione generata sia allineata al database. Testato su Oracle Database Free 23ai.
 
 ## Sicurezza e protezione dei dati
 
@@ -92,6 +92,7 @@ Lo script installa il database nel container, lancia `tests/test_vincoli.sql`, p
 ├── install.sql / uninstall.sql
 ├── docker-compose.yml        Oracle Free per sviluppo locale
 ├── scripts/run-tests.sh      installazione + test in container
+├── scripts/genera-documentazione.sh   dizionario dei dati e diagramma ER
 ├── .github/workflows/ci.yml  CI
 ├── sql/
 │   ├── 01_schema/        tabelle e indici
@@ -108,9 +109,11 @@ Lo script installa il database nel container, lancia `tests/test_vincoli.sql`, p
 ## Documentazione
 
 - [Regole di business](docs/regole_di_business.md)
+- [Dizionario dei dati](docs/dizionario_dati.md) e [diagramma entità-relazione](docs/diagramma_er.md), generati dal database
+- [Come contribuire](CONTRIBUTING.md)
 - [Roadmap](docs/ROADMAP.md)
 - [Relazione completa (PDF)](docs/relazione.pdf): documento di progetto della versione accademica originale (Università Parthenope, corso di Basi di Dati e Laboratorio). Dopo la consegna gli script sono stati rivisti (ruoli al posto degli utenti, trigger unificati, sequenze, indici): per lo stato attuale fanno fede il codice e il [CHANGELOG](CHANGELOG.md). L'ultima pagina del PDF riassume le modifiche successive alla consegna.
-- Diagrammi: [ER](docs/diagrammi/diagramma_er.png) · [relazionale](docs/diagrammi/diagramma_relazionale.png) · [casi d'uso](docs/diagrammi/diagramma_casi_uso.png)
+- Diagrammi della consegna originale: [ER](docs/diagrammi/diagramma_er.png) · [relazionale](docs/diagrammi/diagramma_relazionale.png) · [casi d'uso](docs/diagrammi/diagramma_casi_uso.png)
 
 ## Dati di esempio
 

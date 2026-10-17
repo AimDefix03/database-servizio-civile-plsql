@@ -362,6 +362,29 @@ CREATE TABLE UTENTE_APPLICATIVO (
 -- Collega l'utente di database (SESSION_USER, in maiuscolo) alla persona che lo usa:
 -- è la base su cui le viste e le procedure limitano l'accesso ai dati altrui.
 
+CREATE TABLE AUDIT_LOG (
+    id_audit NUMBER(12,0) PRIMARY KEY,
+    tabella VARCHAR2(30) NOT NULL,
+    chiave VARCHAR2(100) NOT NULL,
+    operazione VARCHAR2(1) NOT NULL,
+    utente VARCHAR2(128) NOT NULL,
+    data_ora TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+    valori_prima VARCHAR2(4000),
+    valori_dopo VARCHAR2(4000),
+
+    CONSTRAINT chk_audit_operazione
+        CHECK (operazione IN ('I', 'U', 'D')),
+
+    CONSTRAINT chk_audit_valori
+        CHECK (
+            (operazione = 'I' AND valori_prima IS NULL AND valori_dopo IS NOT NULL)
+            OR
+            (operazione = 'U' AND valori_prima IS NOT NULL AND valori_dopo IS NOT NULL)
+            OR
+            (operazione = 'D' AND valori_prima IS NOT NULL AND valori_dopo IS NULL)
+        )
+);
+
 -- Sequenze per gli identificativi generati dalle procedure.
 -- Partono da 1000: gli ID inferiori sono riservati ai dati di esempio (seed).
 CREATE SEQUENCE seq_formazione START WITH 1000 INCREMENT BY 1 NOCACHE;
@@ -369,3 +392,4 @@ CREATE SEQUENCE seq_monitoraggio START WITH 1000 INCREMENT BY 1 NOCACHE;
 CREATE SEQUENCE seq_progetto START WITH 1000 INCREMENT BY 1 NOCACHE;
 CREATE SEQUENCE seq_assegnazione START WITH 1000 INCREMENT BY 1 NOCACHE;
 CREATE SEQUENCE seq_registro START WITH 1000 INCREMENT BY 1 NOCACHE;
+CREATE SEQUENCE seq_audit START WITH 1 INCREMENT BY 1 NOCACHE;
