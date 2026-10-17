@@ -14,3 +14,5 @@ CREATE INDEX idx_assegn_formazione_formazione ON ASSEGNAZIONE_FORMAZIONE (id_for
 CREATE INDEX idx_registro_stato ON REGISTRO_SERVIZIO (stato_validazione);
 CREATE INDEX idx_monitoraggio_assegnazione ON MONITORAGGIO (id_assegnazione);
 CREATE INDEX idx_richiesta_assegnazione ON RICHIESTA_VARIAZIONE (id_assegnazione);
+CREATE INDEX idx_audit_tabella_chiave ON AUDIT_LOG (tabella, chiave);
+CREATE INDEX idx_audit_data ON AUDIT_LOG (data_ora);

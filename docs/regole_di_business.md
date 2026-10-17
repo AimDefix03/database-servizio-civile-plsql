@@ -56,3 +56,14 @@ Non eseguono `COMMIT` né `ROLLBACK`: la transazione è del chiamante.
 
 Lo script `tests/test_sicurezza.sql` verifica queste regole connettendosi come utenti reali.
 
+## Tracciabilità (audit)
+
+| Regola | Meccanismo |
+|---|---|
+| Inserimenti, modifiche e cancellazioni di `ASSEGNAZIONE`, `REGISTRO_SERVIZIO` e `RICHIESTA_VARIAZIONE` sono registrate in `AUDIT_LOG` con utente, istante e valori prima e dopo | Trigger `audit_assegnazione`, `audit_registro_servizio`, `audit_richiesta_variazione` |
+| Il log è in sola lettura, anche per l'amministratore | Nessun privilegio di scrittura concesso; solo `SELECT` a `ruolo_amministratore` |
+| Il log fa parte della transazione dell'operazione: un'operazione annullata non lascia righe | I trigger scrivono nella stessa transazione |
+| I dati di esempio non sono nel log | I trigger di audit si installano dopo il seed |
+
+Date e decimali sono scritti in formato fisso (`YYYY-MM-DD`, punto decimale), indipendente dalle impostazioni della sessione.
+

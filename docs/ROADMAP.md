@@ -3,6 +3,7 @@
 Stato di partenza: **v1.1.0**. Schema, 10 procedure, trigger, ruoli, 48 test e CI su Oracle Database Free.
 Fase 1 completata in **v1.2.0** (57 test, lint SQL, verifica di disinstallazione).
 Fase 2 completata in **v1.3.0** (utenti collegati alle persone, viste filtrate e mascherate, 38 test di sicurezza).
+Fase 3 completata in **v1.4.0** (audit, documentazione generata, contributi).
 
 Ogni fase si chiude con una release, il CHANGELOG aggiornato e la CI verde.
 Alla fine di ogni fase si decide se proseguire: la roadmap è un impegno a procedere per passi, non a completare tutto.
@@ -37,10 +38,10 @@ Rischio: richiede di modificare lo schema (nuova tabella di mappatura). Va docum
 
 Obiettivo: rendere il sistema ricostruibile e il progetto presentabile.
 
-- [ ] **Audit**: tabella di log alimentata da trigger per assegnazioni, validazioni delle presenze e richieste di variazione (chi, quando, valore prima e dopo)
-- [ ] **Diagramma ER aggiornato** (Mermaid in `docs/`, versionabile) e **dizionario dei dati** (tabelle, colonne, vincoli)
-- [ ] **`CONTRIBUTING.md`** e modelli di issue e pull request
-- [ ] **Test dell'audit**: ogni modifica rilevante lascia una riga di log coerente
+- [x] **Audit**: tabella di log alimentata da trigger per assegnazioni, validazioni delle presenze e richieste di variazione (chi, quando, valore prima e dopo)
+- [x] **Diagramma ER** (Mermaid) e **dizionario dei dati**, generati dal catalogo del database con verifica in CI che restino allineati
+- [x] **`CONTRIBUTING.md`** e modelli di issue e pull request
+- [x] **Test dell'audit**: ogni modifica rilevante lascia una riga di log coerente
 
 Completata quando: l'audit è coperto dai test, la documentazione dello schema corrisponde al codice e il repository ha le pagine di contorno.
 

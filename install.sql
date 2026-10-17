@@ -13,6 +13,7 @@ WHENEVER SQLERROR EXIT FAILURE ROLLBACK
 PROMPT == Schema ==
 @sql/01_schema/01_tables.sql
 @sql/01_schema/02_indexes.sql
+@sql/01_schema/03_commenti.sql
 
 PROMPT == Procedure, trigger, viste ==
 @sql/03_procedures/01_procedures.sql
@@ -37,6 +38,9 @@ PROMPT == Dati di esempio (caricati con i trigger attivi: ne verificano la coere
 @sql/02_seed/11_monitoraggio.sql
 @sql/02_seed/12_richiesta_variazione.sql
 COMMIT;
+
+PROMPT == Audit (dopo i dati di esempio: il registro parte pulito) ==
+@sql/04_triggers/02_audit.sql
 
 PROMPT == Sicurezza ==
 @sql/06_security/01_security.sql

@@ -27,6 +27,7 @@ BEGIN
             SELECT 'SEQUENCE', 'seq_progetto' FROM DUAL UNION ALL
             SELECT 'SEQUENCE', 'seq_assegnazione' FROM DUAL UNION ALL
             SELECT 'SEQUENCE', 'seq_registro' FROM DUAL UNION ALL
+            SELECT 'SEQUENCE', 'seq_audit' FROM DUAL UNION ALL
             SELECT 'FUNCTION', 'parse_lista_sedi' FROM DUAL UNION ALL
             SELECT 'PROCEDURE', 'crea_progetto' FROM DUAL UNION ALL
             SELECT 'PROCEDURE', 'modifica_progetto' FROM DUAL UNION ALL
@@ -42,7 +43,7 @@ BEGIN
     -- Tabelle in ordine inverso di dipendenza (i trigger cadono con le tabelle)
     FOR t IN (
         SELECT column_value AS n FROM TABLE(SYS.ODCIVARCHAR2LIST(
-            'UTENTE_APPLICATIVO', 'RICHIESTA_VARIAZIONE', 'MONITORAGGIO', 'REGISTRO_SERVIZIO',
+            'AUDIT_LOG', 'UTENTE_APPLICATIVO', 'RICHIESTA_VARIAZIONE', 'MONITORAGGIO', 'REGISTRO_SERVIZIO',
             'ASSEGNAZIONE_FORMAZIONE', 'FORMAZIONE', 'ASSEGNAZIONE', 'VOLONTARIO',
             'PROGETTO_SEDE', 'PROGETTO', 'OPERATORE', 'SEDE', 'ENTE'))
     ) LOOP

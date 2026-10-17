@@ -1,7 +1,7 @@
 -- =============================================================================
 -- Test di sicurezza: va eseguito CONNESSI COME UTENTE DI TEST (non come proprietario)
 -- Uso:  @tests/test_sicurezza.sql <scenario> <id_volontario_proprio> <id_altro_volontario>
---   scenari: VOLONTARIO | OPERATORE | NON_REGISTRATO
+--   scenari: VOLONTARIO | OPERATORE | AMMINISTRATORE | NON_REGISTRATO
 -- Lo orchestra scripts/run-tests.sh, che crea gli utenti e la mappatura UTENTE_APPLICATIVO.
 -- =============================================================================
 SET DEFINE ON
@@ -40,7 +40,8 @@ DECLARE
         v_ko := v_ko + 1;
     EXCEPTION
         WHEN OTHERS THEN
-            IF SQLCODE = p_codice THEN
+            -- ORA-01031 (privilegi insufficienti) in 23ai e' riportato come ORA-41900
+            IF SQLCODE = p_codice OR (p_codice = -1031 AND SQLCODE = -41900) THEN
                 DBMS_OUTPUT.PUT_LINE('[OK]   ' || p_nome);
                 v_ok := v_ok + 1;
             ELSE
@@ -64,6 +65,7 @@ BEGIN
             'SELECT COUNT(*) FROM v_volontari_mascherati');
         attendi_errore('Nessun accesso alla mappatura utenti', -942,
             'SELECT COUNT(*) FROM utente_applicativo');
+        attendi_errore('Nessun accesso al log di audit', -942, 'SELECT COUNT(*) FROM audit_log');
 
         -- Le viste personali mostrano soltanto i propri dati
         v_n := conta('SELECT COUNT(*) FROM v_mie_assegnazioni');
@@ -91,6 +93,7 @@ BEGIN
         attendi_errore('Nessun accesso a OPERATORE', -942, 'SELECT COUNT(*) FROM operatore');
         attendi_errore('Nessun accesso alla mappatura utenti', -942,
             'SELECT COUNT(*) FROM utente_applicativo');
+        attendi_errore('Nessun accesso al log di audit', -942, 'SELECT COUNT(*) FROM audit_log');
         attendi_errore('Nessuna scrittura sull''anagrafica', -942,
             q'[UPDATE volontario SET email = 'x@example.it']');
         attendi_errore('Nessuna vista personale del volontario', -942,
@@ -107,6 +110,26 @@ BEGIN
         -- L'operatore non ha nemmeno EXECUTE sulla procedura (PLS-00201 via ORA-06550)
         attendi_errore('Un operatore non puo'' registrare presenze (nessun EXECUTE)', -6550,
             'BEGIN inserisci_presenza(&2, DATE ''2025-08-01'', ''SERVIZIO'', 6, 0); END;');
+
+    ELSIF '&1' = 'AMMINISTRATORE' THEN
+        esito('Legge l''anagrafica in chiaro', conta('SELECT COUNT(*) FROM volontario') > 0);
+        esito('Legge il log di audit', conta('SELECT COUNT(*) FROM audit_log') >= 0);
+        -- Il log e' in sola lettura anche per l'amministratore (ORA-01031: privilegi insufficienti)
+        attendi_errore('Non puo'' modificare il log di audit', -1031,
+            q'[UPDATE audit_log SET utente = 'X']');
+        attendi_errore('Non puo'' cancellare dal log di audit', -1031, 'DELETE FROM audit_log');
+        attendi_errore('Non puo'' scrivere nel log di audit', -1031,
+            q'[INSERT INTO audit_log (id_audit, tabella, chiave, operazione, utente, valori_dopo)
+               VALUES (1, 'X', '1', 'I', 'X', 'x')]');
+        EXECUTE IMMEDIATE 'BEGIN inserisci_presenza(&2, DATE ''2025-08-01'', ''SERVIZIO'', 6, 0); END;';
+        esito('Registra la presenza di un volontario qualsiasi',
+            conta('SELECT COUNT(*) FROM registro_servizio WHERE id_assegnazione IN
+                     (SELECT id_assegnazione FROM assegnazione WHERE id_volontario = &2)
+                     AND data_servizio = DATE ''2025-08-01''') = 1);
+        EXECUTE IMMEDIATE 'BEGIN valida_presenza(1, DATE ''2025-01-21'', ''VALIDATA''); END;';
+        esito('Esegue le procedure amministrative', TRUE);
+        esito('L''audit registra l''operazione dell''amministratore con il suo utente',
+            conta('SELECT COUNT(*) FROM audit_log WHERE utente = SYS_CONTEXT(''USERENV'', ''SESSION_USER'')') > 0);
 
     ELSIF '&1' = 'NON_REGISTRATO' THEN
         esito('Senza mappatura le viste personali sono vuote',

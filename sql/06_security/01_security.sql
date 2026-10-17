@@ -32,6 +32,8 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON MONITORAGGIO TO ruolo_amministratore;
 GRANT SELECT, INSERT, UPDATE, DELETE ON REGISTRO_SERVIZIO TO ruolo_amministratore;
 GRANT SELECT, INSERT, UPDATE, DELETE ON RICHIESTA_VARIAZIONE TO ruolo_amministratore;
 GRANT SELECT, INSERT, UPDATE, DELETE ON UTENTE_APPLICATIVO TO ruolo_amministratore;
+-- Il log di audit è in sola lettura: nessun ruolo può modificarlo o cancellarlo
+GRANT SELECT ON AUDIT_LOG TO ruolo_amministratore;
 GRANT SELECT ON Presenze_Da_Validare TO ruolo_amministratore;
 GRANT EXECUTE ON disattiva_progetto TO ruolo_amministratore;
 GRANT EXECUTE ON registra_formazione TO ruolo_amministratore;

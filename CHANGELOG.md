@@ -4,6 +4,15 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 
 ## [Non rilasciato]
 
+## [1.4.0] - 2026-10-17
+
+### Aggiunto (Fase 3)
+- Audit: tabella `AUDIT_LOG` e trigger su `ASSEGNAZIONE`, `REGISTRO_SERVIZIO` e `RICHIESTA_VARIAZIONE` (utente, istante, valori prima e dopo). In sola lettura, visibile solo all'amministratore; i dati di esempio non vi compaiono.
+- Commenti su tutte le tabelle e colonne (`sql/01_schema/03_commenti.sql`).
+- `docs/dizionario_dati.md` e `docs/diagramma_er.md` (Mermaid), generati dal database con `scripts/genera-documentazione.sh`; la CI verifica che siano allineati.
+- `CONTRIBUTING.md`, modello di pull request e modelli di issue.
+- Test: 65 sui vincoli, sulle procedure e sull'audit; 49 di sicurezza (aggiunto lo scenario amministratore).
+
 ## [1.3.0] - 2026-10-17
 
 ### Sicurezza (Fase 2)

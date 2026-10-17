@@ -17,6 +17,7 @@ DECLARE
     v_idf    FORMAZIONE.id_formazione%TYPE;
     v_idp    PROGETTO.id_progetto%TYPE;
     v_ida    ASSEGNAZIONE.id_assegnazione%TYPE;
+    v_idr    REGISTRO_SERVIZIO.id_registro%TYPE;
 
     PROCEDURE esito(p_nome IN VARCHAR2, p_condizione IN BOOLEAN) IS
     BEGIN
@@ -27,6 +28,26 @@ DECLARE
             DBMS_OUTPUT.PUT_LINE('[KO]   ' || p_nome);
             v_ko := v_ko + 1;
         END IF;
+    END;
+
+    FUNCTION conta_audit(p_tabella IN VARCHAR2, p_chiave IN VARCHAR2, p_op IN VARCHAR2) RETURN NUMBER IS
+        v NUMBER;
+    BEGIN
+        SELECT COUNT(*) INTO v FROM AUDIT_LOG
+         WHERE tabella = p_tabella AND chiave = p_chiave AND operazione = p_op;
+        RETURN v;
+    END;
+
+    -- Righe di log con valori_prima / valori_dopo che soddisfano i modelli LIKE (NULL = deve essere NULL)
+    FUNCTION conta_audit_like(p_tabella IN VARCHAR2, p_chiave IN VARCHAR2, p_op IN VARCHAR2,
+                              p_prima IN VARCHAR2, p_dopo IN VARCHAR2) RETURN NUMBER IS
+        v NUMBER;
+    BEGIN
+        SELECT COUNT(*) INTO v FROM AUDIT_LOG
+         WHERE tabella = p_tabella AND chiave = p_chiave AND operazione = p_op
+           AND ((p_prima IS NULL AND valori_prima IS NULL) OR valori_prima LIKE p_prima)
+           AND ((p_dopo IS NULL AND valori_dopo IS NULL) OR valori_dopo LIKE p_dopo);
+        RETURN v;
     END;
 
     -- Esegue p_sql e controlla che riesca
@@ -233,6 +254,7 @@ BEGIN
 
     -- ---- inserisci_presenza / valida_presenza --------------------------------
     inserisci_presenza(1, DATE '2025-07-01', 'SERVIZIO', 6, 0, 'test');
+    SELECT seq_registro.CURRVAL INTO v_idr FROM DUAL;
     SELECT COUNT(*) INTO v_n FROM REGISTRO_SERVIZIO
      WHERE id_assegnazione = 1 AND data_servizio = DATE '2025-07-01' AND stato_validazione = 'DA_VALIDARE';
     esito('inserisci_presenza registra la giornata da validare', v_n = 1);
@@ -345,6 +367,42 @@ BEGIN
         DBMS_OUTPUT.PUT_LINE('[KO]   Decadenza al superamento del limite permessi -> stato ' || v_stato);
         v_ko := v_ko + 1;
     END IF;
+
+    -- ---- audit -----------------------------------------------------------------
+    esito('audit: i dati di esempio non sono nel log',
+        conta_audit('ASSEGNAZIONE', '1', 'I') = 0);
+
+    esito('audit: l''inserimento di un''assegnazione e'' registrato con i valori dopo',
+        conta_audit_like('ASSEGNAZIONE', TO_CHAR(v_ida), 'I', NULL,
+            '%data_inizio=2026-01-01%stato_assegnazione=ATTIVA%') = 1);
+
+    esito('audit: la validazione di una presenza registra prima e dopo',
+        conta_audit_like('REGISTRO_SERVIZIO', TO_CHAR(v_idr), 'U',
+            '%stato_validazione=DA_VALIDARE%', '%ore_svolte=7;%stato_validazione=VALIDATA%') = 1);
+
+    esito('audit: l''approvazione di una richiesta registra IN_ATTESA -> APPROVATA',
+        conta_audit_like('RICHIESTA_VARIAZIONE', '9101', 'U',
+            '%stato_richiesta=IN_ATTESA%', '%stato_richiesta=APPROVATA%') = 1);
+
+    esito('audit: la decadenza automatica e'' registrata',
+        conta_audit_like('ASSEGNAZIONE', '9003', 'U',
+            '%stato_assegnazione=ATTIVA%', '%stato_assegnazione=DECADUTA%') = 1);
+
+    DELETE FROM REGISTRO_SERVIZIO WHERE id_registro = 9012;
+    esito('audit: la cancellazione registra solo i valori prima',
+        conta_audit_like('REGISTRO_SERVIZIO', '9012', 'D', '%tipo_giornata=PERMESSO_STRAORDINARIO%', NULL) = 1);
+
+    SAVEPOINT prima_dell_annullamento;
+    INSERT INTO REGISTRO_SERVIZIO (id_registro, id_assegnazione, data_servizio, tipo_giornata,
+                                   ore_svolte, stato_validazione)
+    VALUES (9030, 1, DATE '2025-07-20', 'SERVIZIO', 5, 'DA_VALIDARE');
+    ROLLBACK TO SAVEPOINT prima_dell_annullamento;
+    esito('audit: un''operazione annullata non lascia traccia nel log',
+        conta_audit('REGISTRO_SERVIZIO', '9030', 'I') = 0);
+
+    SELECT COUNT(*) INTO v_n FROM AUDIT_LOG
+     WHERE utente <> SYS_CONTEXT('USERENV', 'SESSION_USER');
+    esito('audit: l''utente registrato e'' quello della sessione', v_n = 0);
 
     ROLLBACK;
     DBMS_OUTPUT.PUT_LINE('---');
