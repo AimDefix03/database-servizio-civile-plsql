@@ -122,7 +122,7 @@ BEGIN
         RAISE_APPLICATION_ERROR(-20092, 'L''assegnazione indicata non esiste.');
     END IF;
 
-    SELECT * INTO v_ass FROM ASSEGNAZIONE WHERE id_assegnazione = p_id_assegnazione;
+    SELECT * INTO v_ass FROM ASSEGNAZIONE WHERE id_assegnazione = p_id_assegnazione; -- noqa: AM04
 
     IF p_data_servizio < v_ass.data_inizio THEN
         RAISE_APPLICATION_ERROR(-20093, 'L''assegnazione non è valida nella data indicata.');
@@ -147,7 +147,7 @@ BEGIN
         RAISE_APPLICATION_ERROR(-20096, 'Presenza non trovata per assegnazione e data indicate.');
     END IF;
 
-    SELECT * INTO v_reg
+    SELECT * INTO v_reg -- noqa: AM04
     FROM REGISTRO_SERVIZIO
     WHERE id_assegnazione = p_id_assegnazione AND data_servizio = p_data_servizio;
 

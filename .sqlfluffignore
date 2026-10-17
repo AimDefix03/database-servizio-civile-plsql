@@ -1,0 +1,8 @@
+# Il dialetto Oracle di SQLFluff non conosce la sintassi COMPOUND TRIGGER
+# (il codice è valido ed è eseguito dai test su Oracle).
+sql/04_triggers/01_triggers.sql
+
+# Script SQL*Plus (comandi @, SET, PROMPT): non sono SQL puro
+install.sql
+uninstall.sql
+tests/

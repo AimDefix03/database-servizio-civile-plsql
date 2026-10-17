@@ -1,6 +1,7 @@
 # Roadmap
 
 Stato di partenza: **v1.1.0**. Schema, 10 procedure, trigger, ruoli, 48 test e CI su Oracle Database Free.
+Fase 1 completata in **v1.2.0** (57 test, lint SQL, verifica di disinstallazione).
 
 Ogni fase si chiude con una release, il CHANGELOG aggiornato e la CI verde.
 Alla fine di ogni fase si decide se proseguire: la roadmap è un impegno a procedere per passi, non a completare tutto.
@@ -9,11 +10,11 @@ Alla fine di ogni fase si decide se proseguire: la roadmap è un impegno a proce
 
 Obiettivo: rendere verificabile e leggibile ciò che già c'è.
 
-- [ ] **Lint SQL in CI** con SQLFluff (dialetto Oracle), con regole limitate se i falsi positivi sono troppi
-- [ ] **Test completi sui trigger**: un caso dedicato per ciascun trigger, incluse malattie retribuite e non retribuite e `check_progetto_sede_assegnazione` in aggiornamento
-- [ ] **Test di `uninstall.sql`**: dopo la disinstallazione lo schema è vuoto e `install.sql` si può rieseguire
-- [ ] **Badge nel README** (CI, licenza, ultima release)
-- [ ] **Esempio d'uso** nel README: sessione completa dall'installazione a un caso reale
+- [x] **Lint SQL in CI** con SQLFluff (dialetto Oracle), con regole limitate ai problemi reali (sintassi, JOIN esplicite, newline finale). Il file dei trigger è escluso perché il linter non conosce `COMPOUND TRIGGER`
+- [x] **Test completi sui trigger**: un caso dedicato per ciascun trigger, incluse malattie retribuite e non retribuite e `check_progetto_sede_assegnazione` in aggiornamento
+- [x] **Test di `uninstall.sql`**: dopo la disinstallazione lo schema è vuoto e `install.sql` si può rieseguire
+- [x] **Badge nel README** (CI, licenza, ultima release)
+- [x] **Esempio d'uso** nel README: sessione completa dall'installazione a un caso reale
 
 Completata quando: CI con lint e test verdi, ogni trigger ha almeno un caso di rifiuto e uno di successo, README con badge ed esempio.
 

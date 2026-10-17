@@ -213,7 +213,7 @@ BEGIN
                 'Per approvare servono nuovo progetto, nuova sede e data di decorrenza.');
         END IF;
 
-        SELECT * INTO v_ass FROM ASSEGNAZIONE WHERE id_assegnazione = v_id_assegnazione;
+        SELECT * INTO v_ass FROM ASSEGNAZIONE WHERE id_assegnazione = v_id_assegnazione; -- noqa: AM04
 
         IF v_ass.stato_assegnazione <> 'ATTIVA' THEN
             RAISE_APPLICATION_ERROR(-20075, 'L''assegnazione corrente non è attiva.');
