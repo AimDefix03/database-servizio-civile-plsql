@@ -65,6 +65,7 @@ Lo script installa il database nel container e lancia `tests/test_vincoli.sql` (
 ## Documentazione
 
 - [Regole di business](docs/regole_di_business.md)
+- [Roadmap](docs/ROADMAP.md)
 - [Relazione completa (PDF)](docs/relazione.pdf): documento di progetto della versione accademica originale (Università Parthenope, corso di Basi di Dati e Laboratorio). Dopo la consegna gli script sono stati rivisti (ruoli al posto degli utenti, trigger unificati, sequenze, indici): per lo stato attuale fanno fede il codice e il [CHANGELOG](CHANGELOG.md). L'ultima pagina del PDF riassume le modifiche successive alla consegna.
 - Diagrammi: [ER](docs/diagrammi/diagramma_er.png) · [relazionale](docs/diagrammi/diagramma_relazionale.png) · [casi d'uso](docs/diagrammi/diagramma_casi_uso.png)
 
