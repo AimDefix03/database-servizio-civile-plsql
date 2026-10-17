@@ -7,6 +7,11 @@
 --   CREATE USER mario_rossi IDENTIFIED BY "<password>";
 --   GRANT CREATE SESSION TO mario_rossi;
 --   GRANT ruolo_amministratore TO mario_rossi;
+--
+-- e registrare la persona collegata (obbligatorio per operatori e volontari):
+--
+--   INSERT INTO UTENTE_APPLICATIVO (username, tipo_utente, id_volontario)
+--   VALUES ('MARIO_ROSSI', 'VOLONTARIO', 1);
 -- =============================================================================
 
 CREATE ROLE ruolo_amministratore;
@@ -26,6 +31,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON ASSEGNAZIONE_FORMAZIONE TO ruolo_amminis
 GRANT SELECT, INSERT, UPDATE, DELETE ON MONITORAGGIO TO ruolo_amministratore;
 GRANT SELECT, INSERT, UPDATE, DELETE ON REGISTRO_SERVIZIO TO ruolo_amministratore;
 GRANT SELECT, INSERT, UPDATE, DELETE ON RICHIESTA_VARIAZIONE TO ruolo_amministratore;
+GRANT SELECT, INSERT, UPDATE, DELETE ON UTENTE_APPLICATIVO TO ruolo_amministratore;
 GRANT SELECT ON Presenze_Da_Validare TO ruolo_amministratore;
 GRANT EXECUTE ON disattiva_progetto TO ruolo_amministratore;
 GRANT EXECUTE ON registra_formazione TO ruolo_amministratore;
@@ -38,8 +44,8 @@ GRANT EXECUTE ON gestisci_richiesta_variazione TO ruolo_amministratore;
 GRANT EXECUTE ON valida_presenza TO ruolo_amministratore;
 GRANT EXECUTE ON inserisci_presenza TO ruolo_amministratore;
 
--- Operatore: consulta le anagrafiche, gestisce formazione e monitoraggi
-GRANT SELECT ON VOLONTARIO TO ruolo_operatore;
+-- Operatore: consulta i volontari solo in forma mascherata, gestisce formazione e monitoraggi
+GRANT SELECT ON v_volontari_mascherati TO ruolo_operatore;
 GRANT SELECT ON PROGETTO TO ruolo_operatore;
 GRANT SELECT ON SEDE TO ruolo_operatore;
 GRANT SELECT ON ASSEGNAZIONE TO ruolo_operatore;
@@ -53,11 +59,15 @@ GRANT EXECUTE ON registra_formazione TO ruolo_operatore;
 GRANT EXECUTE ON registra_partecipazione_formazione TO ruolo_operatore;
 GRANT EXECUTE ON registra_monitoraggio TO ruolo_operatore;
 
--- Volontario: consulta il proprio percorso e compila il registro di servizio
-GRANT SELECT ON ASSEGNAZIONE TO ruolo_volontario;
+-- Volontario: nessun accesso diretto ai dati delle persone; legge soltanto i propri
+-- dati tramite le viste v_mie_* e registra le presenze con inserisci_presenza
+GRANT SELECT ON PROGETTO TO ruolo_volontario;
+GRANT SELECT ON SEDE TO ruolo_volontario;
+GRANT SELECT ON PROGETTO_SEDE TO ruolo_volontario;
 GRANT SELECT ON FORMAZIONE TO ruolo_volontario;
-GRANT SELECT ON ASSEGNAZIONE_FORMAZIONE TO ruolo_volontario;
-GRANT SELECT ON MONITORAGGIO TO ruolo_volontario;
-GRANT SELECT ON RICHIESTA_VARIAZIONE TO ruolo_volontario;
-GRANT SELECT, INSERT, UPDATE ON REGISTRO_SERVIZIO TO ruolo_volontario;
+GRANT SELECT ON v_mie_assegnazioni TO ruolo_volontario;
+GRANT SELECT ON v_mio_registro TO ruolo_volontario;
+GRANT SELECT ON v_mie_partecipazioni_formazione TO ruolo_volontario;
+GRANT SELECT ON v_miei_monitoraggi TO ruolo_volontario;
+GRANT SELECT ON v_mie_richieste_variazione TO ruolo_volontario;
 GRANT EXECUTE ON inserisci_presenza TO ruolo_volontario;

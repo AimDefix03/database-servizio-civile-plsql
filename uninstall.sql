@@ -12,6 +12,12 @@ BEGIN
             SELECT 'ROLE', 'ruolo_operatore' FROM DUAL UNION ALL
             SELECT 'ROLE', 'ruolo_volontario' FROM DUAL UNION ALL
             SELECT 'VIEW', 'Presenze_Da_Validare' FROM DUAL UNION ALL
+            SELECT 'VIEW', 'v_volontari_mascherati' FROM DUAL UNION ALL
+            SELECT 'VIEW', 'v_mie_assegnazioni' FROM DUAL UNION ALL
+            SELECT 'VIEW', 'v_mio_registro' FROM DUAL UNION ALL
+            SELECT 'VIEW', 'v_mie_partecipazioni_formazione' FROM DUAL UNION ALL
+            SELECT 'VIEW', 'v_miei_monitoraggi' FROM DUAL UNION ALL
+            SELECT 'VIEW', 'v_mie_richieste_variazione' FROM DUAL UNION ALL
             SELECT 'PROCEDURE', 'disattiva_progetto' FROM DUAL UNION ALL
             SELECT 'PROCEDURE', 'registra_formazione' FROM DUAL UNION ALL
             SELECT 'PROCEDURE', 'registra_partecipazione_formazione' FROM DUAL UNION ALL
@@ -36,7 +42,7 @@ BEGIN
     -- Tabelle in ordine inverso di dipendenza (i trigger cadono con le tabelle)
     FOR t IN (
         SELECT column_value AS n FROM TABLE(SYS.ODCIVARCHAR2LIST(
-            'RICHIESTA_VARIAZIONE', 'MONITORAGGIO', 'REGISTRO_SERVIZIO',
+            'UTENTE_APPLICATIVO', 'RICHIESTA_VARIAZIONE', 'MONITORAGGIO', 'REGISTRO_SERVIZIO',
             'ASSEGNAZIONE_FORMAZIONE', 'FORMAZIONE', 'ASSEGNAZIONE', 'VOLONTARIO',
             'PROGETTO_SEDE', 'PROGETTO', 'OPERATORE', 'SEDE', 'ENTE'))
     ) LOOP

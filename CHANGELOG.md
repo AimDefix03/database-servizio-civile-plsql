@@ -4,6 +4,17 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 
 ## [Non rilasciato]
 
+### Sicurezza (Fase 2)
+- Tabella `UTENTE_APPLICATIVO`: collega l'utente di database alla persona (volontario, operatore o amministratore).
+- Viste `v_mie_*` per i volontari (solo i propri dati) e `v_volontari_mascherati` per gli operatori (codice fiscale, e-mail e telefono parzialmente oculati).
+- `inserisci_presenza` accetta solo il volontario collegato all'utente connesso (`-20148`) e rifiuta operatori e utenti non registrati (`-20149`).
+- Test di sicurezza eseguiti con utenti reali (`tests/test_sicurezza.sql`, 38 casi) e nota sul GDPR nel README.
+
+### Modifiche che rompono la compatibilità
+- `ruolo_volontario` non ha più accesso diretto alle tabelle `ASSEGNAZIONE`, `ASSEGNAZIONE_FORMAZIONE`, `MONITORAGGIO`, `RICHIESTA_VARIAZIONE` e `REGISTRO_SERVIZIO` (prima poteva leggere quelle di tutti e scrivere sul registro): usa le viste `v_mie_*`.
+- `ruolo_operatore` non legge più `VOLONTARIO` in chiaro: usa `v_volontari_mascherati`.
+- Gli utenti con ruolo di operatore o volontario vanno registrati in `UTENTE_APPLICATIVO`.
+
 ## [1.2.0] - 2026-10-17
 
 ### Aggiunto

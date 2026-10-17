@@ -69,7 +69,21 @@ docker compose up -d --wait
 scripts/run-tests.sh
 ```
 
-Lo script installa il database nel container, lancia `tests/test_vincoli.sql`, poi verifica che `uninstall.sql` lasci lo schema vuoto e che la reinstallazione riesca. I test sono 57 casi: ogni trigger e ogni procedura ha almeno un caso di rifiuto e uno di successo, e annullano le modifiche con un `ROLLBACK`. Gli stessi passi girano in CI a ogni push ([workflow](.github/workflows/ci.yml)). Testato su Oracle Database Free 23ai.
+Lo script installa il database nel container, lancia `tests/test_vincoli.sql`, poi verifica che `uninstall.sql` lasci lo schema vuoto e che la reinstallazione riesca. I test sono 57 casi sui vincoli (ogni trigger e ogni procedura ha almeno un caso di rifiuto e uno di successo) e 38 casi di sicurezza eseguiti con utenti reali (volontario, altro volontario, operatore, utente non registrato), e annullano le modifiche con un `ROLLBACK`. Gli stessi passi girano in CI a ogni push ([workflow](.github/workflows/ci.yml)). Testato su Oracle Database Free 23ai.
+
+## Sicurezza e protezione dei dati
+
+- **Ruoli con privilegio minimo.** `ruolo_amministratore`, `ruolo_operatore` e `ruolo_volontario` non hanno accesso diretto alle tabelle con dati di persone, salvo l'amministratore.
+- **Volontari.** Leggono soltanto i propri dati, tramite le viste `v_mie_*`, e registrano le presenze con `inserisci_presenza`, che accetta solo il proprio identificativo.
+- **Operatori.** Vedono i volontari tramite `v_volontari_mascherati`: codice fiscale, e-mail e telefono sono parzialmente oculati.
+- **Mappatura utenti.** Le viste e `inserisci_presenza` riconoscono la persona dall'utente di database connesso tramite la tabella `UTENTE_APPLICATIVO`. Un utente non registrato non vede dati personali e non può registrare presenze. Esempio:
+
+  ```sql
+  INSERT INTO UTENTE_APPLICATIVO (username, tipo_utente, id_volontario)
+  VALUES ('MARIO_ROSSI', 'VOLONTARIO', 1);   -- username in maiuscolo
+  ```
+
+**Nota sul GDPR.** I dati di esempio sono interamente fittizi. Lo schema contiene dati personali (anagrafiche di volontari e operatori) e questo repository **non è pensato per ospitare dati reali** senza le misure che un trattamento reale richiede: base giuridica, informativa, registro dei trattamenti, conservazione limitata, cifratura a riposo e in transito, gestione degli accessi e degli incidenti. Le misure qui descritte limitano l'esposizione dei dati nel database ma non sostituiscono una valutazione di conformità.
 
 ## Struttura
 
@@ -84,7 +98,7 @@ Lo script installa il database nel container, lancia `tests/test_vincoli.sql`, p
 │   ├── 02_seed/          dati di esempio (fittizi)
 │   ├── 03_procedures/    procedure PL/SQL
 │   ├── 04_triggers/      vincoli applicativi
-│   ├── 05_views/         viste
+│   ├── 05_views/         viste (anche quelle di sicurezza)
 │   ├── 06_security/      ruoli e privilegi
 │   └── 07_queries/       query di esempio (sola lettura)
 ├── tests/                test dei vincoli

@@ -323,6 +323,45 @@ CREATE TABLE RICHIESTA_VARIAZIONE (
         CHECK (stato_richiesta IN ('IN_ATTESA', 'APPROVATA', 'RIFIUTATA'))
 );
 
+CREATE TABLE UTENTE_APPLICATIVO (
+    username VARCHAR2(128) PRIMARY KEY,
+    tipo_utente VARCHAR2(15) NOT NULL,
+    id_volontario NUMBER(10,0),
+    id_operatore NUMBER(10,0),
+
+    CONSTRAINT fk_utente_volontario
+        FOREIGN KEY (id_volontario)
+        REFERENCES VOLONTARIO(id_volontario),
+
+    CONSTRAINT fk_utente_operatore
+        FOREIGN KEY (id_operatore)
+        REFERENCES OPERATORE(id_operatore),
+
+    CONSTRAINT uq_utente_volontario
+        UNIQUE (id_volontario),
+
+    CONSTRAINT uq_utente_operatore
+        UNIQUE (id_operatore),
+
+    CONSTRAINT chk_username_maiuscolo
+        CHECK (username = UPPER(username)),
+
+    CONSTRAINT chk_tipo_utente
+        CHECK (tipo_utente IN ('AMMINISTRATORE', 'OPERATORE', 'VOLONTARIO')),
+
+    CONSTRAINT chk_coerenza_tipo_utente
+        CHECK (
+            (tipo_utente = 'VOLONTARIO' AND id_volontario IS NOT NULL AND id_operatore IS NULL)
+            OR
+            (tipo_utente = 'OPERATORE' AND id_operatore IS NOT NULL AND id_volontario IS NULL)
+            OR
+            (tipo_utente = 'AMMINISTRATORE' AND id_volontario IS NULL AND id_operatore IS NULL)
+        )
+);
+
+-- Collega l'utente di database (SESSION_USER, in maiuscolo) alla persona che lo usa:
+-- è la base su cui le viste e le procedure limitano l'accesso ai dati altrui.
+
 -- Sequenze per gli identificativi generati dalle procedure.
 -- Partono da 1000: gli ID inferiori sono riservati ai dati di esempio (seed).
 CREATE SEQUENCE seq_formazione START WITH 1000 INCREMENT BY 1 NOCACHE;
