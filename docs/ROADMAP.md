@@ -2,6 +2,7 @@
 
 Stato di partenza: **v1.1.0**. Schema, 10 procedure, trigger, ruoli, 48 test e CI su Oracle Database Free.
 Fase 1 completata in **v1.2.0** (57 test, lint SQL, verifica di disinstallazione).
+Fase 2 completata in **v1.3.0** (utenti collegati alle persone, viste filtrate e mascherate, 38 test di sicurezza).
 
 Ogni fase si chiude con una release, il CHANGELOG aggiornato e la CI verde.
 Alla fine di ogni fase si decide se proseguire: la roadmap è un impegno a procedere per passi, non a completare tutto.

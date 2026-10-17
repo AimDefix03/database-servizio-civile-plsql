@@ -4,6 +4,8 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 
 ## [Non rilasciato]
 
+## [1.3.0] - 2026-10-17
+
 ### Sicurezza (Fase 2)
 - Tabella `UTENTE_APPLICATIVO`: collega l'utente di database alla persona (volontario, operatore o amministratore).
 - Viste `v_mie_*` per i volontari (solo i propri dati) e `v_volontari_mascherati` per gli operatori (codice fiscale, e-mail e telefono parzialmente oculati).
