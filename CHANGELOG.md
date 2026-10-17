@@ -4,6 +4,17 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 
 ## [Non rilasciato]
 
+## [1.2.0] - 2026-10-17
+
+### Aggiunto
+- Lint SQL in CI con SQLFluff (`.sqlfluff`, `.sqlfluffignore`).
+- Test di ogni trigger (successo e rifiuto) e delle regole sulle malattie retribuite e non retribuite: da 48 a 57 casi.
+- Verifica automatica che `uninstall.sql` lasci lo schema e i ruoli vuoti e che la reinstallazione riesca (`tests/verifica_schema_vuoto.sql`).
+- Badge e sezione "Esempio d'uso" nel README; roadmap in `docs/ROADMAP.md`.
+
+### Modificato
+- JOIN esplicite (`INNER JOIN`) nella vista e nelle query di esempio; newline finale in tutti i file SQL.
+
 ## [1.1.0] - 2026-10-16
 
 ### Aggiunto

@@ -17,8 +17,8 @@ SELECT
     a.id_progetto,
     a.id_sede
 FROM REGISTRO_SERVIZIO rs
-JOIN ASSEGNAZIONE a
+INNER JOIN ASSEGNAZIONE a
     ON rs.id_assegnazione = a.id_assegnazione
-JOIN VOLONTARIO v
+INNER JOIN VOLONTARIO v
     ON a.id_volontario = v.id_volontario
 WHERE rs.stato_validazione = 'DA_VALIDARE';

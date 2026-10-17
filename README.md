@@ -1,5 +1,9 @@
 # DB Servizio Civile
 
+[![CI](https://github.com/AimDefix03/database-servizio-civile-plsql/actions/workflows/ci.yml/badge.svg)](https://github.com/AimDefix03/database-servizio-civile-plsql/actions/workflows/ci.yml)
+[![Licenza: MIT](https://img.shields.io/badge/licenza-MIT-blue.svg)](LICENSE)
+[![Ultima release](https://img.shields.io/github/v/release/AimDefix03/database-servizio-civile-plsql)](https://github.com/AimDefix03/database-servizio-civile-plsql/releases)
+
 Database Oracle per la gestione amministrativa del Servizio Civile: enti, sedi, progetti, volontari, assegnazioni, registro di servizio, formazione, monitoraggi e variazioni di percorso. Le regole di business sono applicate direttamente dal database tramite vincoli, trigger e procedure PL/SQL.
 
 ![Diagramma ER](docs/diagrammi/diagramma_er.png)
@@ -33,6 +37,31 @@ Per rimuovere tutto: `@uninstall.sql`.
 
 Se non hai un'istanza Oracle, ne puoi avviare una locale con Docker (`docker compose up -d --wait`, utente `sc`, servizio `FREEPDB1`, porta 1521; credenziali in `docker-compose.yml`, solo per uso locale).
 
+## Esempio d'uso
+
+Dopo `@install.sql`, da SQL*Plus o SQLcl:
+
+```sql
+SET SERVEROUTPUT ON
+
+-- Un amministratore crea un progetto collegato alle sedi 1 e 2 (4 posti ciascuna)
+EXEC crea_progetto(1, 'Orto sociale', 'AMBIENTE', 'Cura di spazi verdi condivisi', DATE '2026-03-01', NULL, 'ATTIVO', '1,2', 4);
+-- Progetto creato con successo. ID progetto: 1000
+
+-- Un volontario registra una giornata di servizio (stato iniziale DA_VALIDARE)
+EXEC inserisci_presenza(1, DATE '2025-07-01', 'SERVIZIO', 6, 0);
+-- Presenza registrata con successo. ID registro: 1000
+
+-- Registrare di nuovo la stessa giornata viene rifiutato dal database
+EXEC inserisci_presenza(1, DATE '2025-07-01', 'SERVIZIO', 6, 0);
+-- ORA-20146: Esiste già una presenza per questa assegnazione e questa data.
+
+-- Le giornate in attesa di validazione
+SELECT * FROM Presenze_Da_Validare;
+```
+
+Le procedure non fanno `COMMIT`: confermare con `COMMIT` oppure annullare con `ROLLBACK`. Altre interrogazioni in [sql/07_queries/esempi.sql](sql/07_queries/esempi.sql).
+
 ## Test
 
 ```bash
@@ -40,7 +69,7 @@ docker compose up -d --wait
 scripts/run-tests.sh
 ```
 
-Lo script installa il database nel container e lancia `tests/test_vincoli.sql` (48 casi: rifiuto delle operazioni non valide, casi di successo e di errore di tutte le procedure, decadenza automatica), poi esegue un `ROLLBACK`. Gli stessi passi girano in CI a ogni push ([workflow](.github/workflows/ci.yml)). Testato su Oracle Database Free 23ai.
+Lo script installa il database nel container, lancia `tests/test_vincoli.sql`, poi verifica che `uninstall.sql` lasci lo schema vuoto e che la reinstallazione riesca. I test sono 57 casi: ogni trigger e ogni procedura ha almeno un caso di rifiuto e uno di successo, e annullano le modifiche con un `ROLLBACK`. Gli stessi passi girano in CI a ogni push ([workflow](.github/workflows/ci.yml)). Testato su Oracle Database Free 23ai.
 
 ## Struttura
 

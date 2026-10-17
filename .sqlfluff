@@ -1,0 +1,6 @@
+[sqlfluff]
+dialect = oracle
+# Il parsing (errori di sintassi) è sempre attivo. Delle regole di stile restano
+# solo quelle che segnalano problemi reali; maiuscole, indentazione e lunghezza
+# delle righe non sono vincolate (convenzione mista degli script esistenti).
+rules = LT12, AM04, AM05

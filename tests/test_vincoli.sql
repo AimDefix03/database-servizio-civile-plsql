@@ -29,6 +29,18 @@ DECLARE
         END IF;
     END;
 
+    -- Esegue p_sql e controlla che riesca
+    PROCEDURE attendi_ok(p_nome IN VARCHAR2, p_sql IN VARCHAR2) IS
+    BEGIN
+        EXECUTE IMMEDIATE p_sql;
+        DBMS_OUTPUT.PUT_LINE('[OK]   ' || p_nome);
+        v_ok := v_ok + 1;
+    EXCEPTION
+        WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('[KO]   ' || p_nome || ' -> ' || SQLCODE || ' ' || SQLERRM);
+            v_ko := v_ko + 1;
+    END;
+
     -- Esegue p_sql e controlla che fallisca con il codice atteso
     PROCEDURE attendi_errore(p_nome IN VARCHAR2, p_codice IN PLS_INTEGER, p_sql IN VARCHAR2) IS
     BEGIN
@@ -246,6 +258,71 @@ BEGIN
      WHERE id_assegnazione = 1 AND data_servizio = DATE '2025-07-01'
        AND stato_validazione = 'VALIDATA' AND ore_svolte = 7 AND note = 'corretta';
     esito('valida_presenza valida e corregge le ore', v_n = 1);
+
+    -- ---- copertura di ogni trigger ---------------------------------------------
+    -- check_assegnazione_attiva: un periodo non sovrapposto e' ammesso
+    attendi_ok('check_assegnazione_attiva: nuova assegnazione non sovrapposta',
+        q'[INSERT INTO ASSEGNAZIONE (id_assegnazione, id_volontario, id_progetto, id_sede, data_inizio,
+               data_fine_prevista, stato_assegnazione, ore_settimanali_previste)
+           VALUES (9010, 1, 1, 1, DATE '2026-01-01', DATE '2026-06-30', 'ATTIVA', 35)]');
+
+    -- check_progetto_sede_assegnazione: anche in aggiornamento
+    attendi_errore('check_progetto_sede_assegnazione: aggiornamento verso sede non del progetto', -20002,
+        'UPDATE ASSEGNAZIONE SET id_sede = 4 WHERE id_assegnazione = 1');
+
+    -- check_permesso_straordinario_valido
+    attendi_errore('check_permesso_straordinario_valido: nota vuota', -20009,
+        q'[INSERT INTO REGISTRO_SERVIZIO (id_registro, id_assegnazione, data_servizio, tipo_giornata,
+               ore_svolte, stato_validazione, note)
+           VALUES (9011, 1, DATE '2025-07-10', 'PERMESSO_STRAORDINARIO', 0, 'DA_VALIDARE', '   ')]');
+    attendi_ok('check_permesso_straordinario_valido: con motivazione',
+        q'[INSERT INTO REGISTRO_SERVIZIO (id_registro, id_assegnazione, data_servizio, tipo_giornata,
+               ore_svolte, stato_validazione, note)
+           VALUES (9012, 1, DATE '2025-07-10', 'PERMESSO_STRAORDINARIO', 0, 'DA_VALIDARE', 'visita medica')]');
+
+    -- check_coerenza_tipo_giornata_ore: permesso con ore
+    attendi_errore('check_coerenza_tipo_giornata_ore: permesso con ore svolte', -20018,
+        q'[INSERT INTO REGISTRO_SERVIZIO (id_registro, id_assegnazione, data_servizio, tipo_giornata,
+               ore_svolte, stato_validazione)
+           VALUES (9013, 1, DATE '2025-07-11', 'PERMESSO_ORDINARIO', 5, 'DA_VALIDARE')]');
+
+    -- check_monitoraggio_assegnazione_valida: caso di successo
+    attendi_ok('check_monitoraggio_assegnazione_valida: monitoraggio nel periodo',
+        q'[INSERT INTO MONITORAGGIO (id_monitoraggio, id_assegnazione, data_monitoraggio, tipo_monitoraggio)
+           VALUES (9014, 1, DATE '2025-06-10', 'INTERMEDIO')]');
+
+    -- check_limiti_assenze: decadenza per malattie retribuite e non retribuite
+    INSERT INTO VOLONTARIO (id_volontario, nome, cognome, codice_fiscale, data_nascita, email,
+                            comune_residenza, stato_volontario)
+    VALUES (9003, 'Test', 'MalRetr', 'TSTMLR00A01H501Z', DATE '2000-01-01', 'test3@example.it',
+            'Napoli', 'ATTIVO');
+    INSERT INTO VOLONTARIO (id_volontario, nome, cognome, codice_fiscale, data_nascita, email,
+                            comune_residenza, stato_volontario)
+    VALUES (9004, 'Test', 'MalNonRetr', 'TSTMNR00A01H501W', DATE '2000-01-01', 'test4@example.it',
+            'Napoli', 'ATTIVO');
+    INSERT INTO ASSEGNAZIONE (id_assegnazione, id_volontario, id_progetto, id_sede, data_inizio,
+                              data_fine_prevista, stato_assegnazione, ore_settimanali_previste,
+                              max_malattie_retribuite)
+    VALUES (9020, 9003, 1, 1, DATE '2025-03-01', DATE '2025-12-31', 'ATTIVA', 35, 0);
+    INSERT INTO ASSEGNAZIONE (id_assegnazione, id_volontario, id_progetto, id_sede, data_inizio,
+                              data_fine_prevista, stato_assegnazione, ore_settimanali_previste,
+                              max_malattie_non_retribuite)
+    VALUES (9021, 9004, 1, 1, DATE '2025-03-01', DATE '2025-12-31', 'ATTIVA', 35, 0);
+    INSERT INTO REGISTRO_SERVIZIO (id_registro, id_assegnazione, data_servizio, tipo_giornata,
+                                   ore_svolte, stato_validazione)
+    VALUES (9020, 9020, DATE '2025-03-10', 'MALATTIA_RETRIBUITA', 0, 'DA_VALIDARE');
+    INSERT INTO REGISTRO_SERVIZIO (id_registro, id_assegnazione, data_servizio, tipo_giornata,
+                                   ore_svolte, stato_validazione)
+    VALUES (9021, 9021, DATE '2025-03-10', 'MALATTIA_NON_RETRIBUITA', 0, 'DA_VALIDARE');
+
+    SELECT stato_assegnazione INTO v_stato FROM ASSEGNAZIONE WHERE id_assegnazione = 9020;
+    esito('check_limiti_assenze: decadenza per malattie retribuite', v_stato = 'DECADUTA');
+    SELECT stato_assegnazione INTO v_stato FROM ASSEGNAZIONE WHERE id_assegnazione = 9021;
+    esito('check_limiti_assenze: decadenza per malattie non retribuite', v_stato = 'DECADUTA');
+
+    -- entro i limiti l'assegnazione resta attiva
+    SELECT stato_assegnazione INTO v_stato FROM ASSEGNAZIONE WHERE id_assegnazione = 1;
+    esito('check_limiti_assenze: un''assegnazione entro i limiti resta attiva', v_stato = 'ATTIVA');
 
     -- Decadenza automatica: assegnazione con 0 permessi ordinari consentiti
     INSERT INTO VOLONTARIO (id_volontario, nome, cognome, codice_fiscale, data_nascita, email,
