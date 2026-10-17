@@ -1,6 +1,6 @@
 -- =============================================================================
 -- Procedure sul registro di servizio: inserisci_presenza, valida_presenza
--- Codici d'errore: -20140..-20147 (inserimento), -20090..-20098 (validazione)
+-- Codici d'errore: -20140..-20149 (inserimento), -20090..-20098 (validazione)
 -- =============================================================================
 
 CREATE OR REPLACE PROCEDURE inserisci_presenza (
@@ -16,6 +16,9 @@ AS
     v_id_assegnazione  ASSEGNAZIONE.id_assegnazione%TYPE;
     v_id_registro      NUMBER;
     v_tipo             VARCHAR2(30) := UPPER(TRIM(p_tipo_giornata));
+    v_utente           VARCHAR2(128) := SYS_CONTEXT('USERENV', 'SESSION_USER');
+    v_tipo_utente      UTENTE_APPLICATIVO.tipo_utente%TYPE;
+    v_id_vol_utente    UTENTE_APPLICATIVO.id_volontario%TYPE;
 BEGIN
     IF p_id_volontario IS NULL
        OR p_data_servizio IS NULL
@@ -23,6 +26,23 @@ BEGIN
        OR p_ore_svolte IS NULL
        OR p_ore_da_recuperare IS NULL THEN
         RAISE_APPLICATION_ERROR(-20140, 'Dati obbligatori mancanti per l''inserimento della presenza.');
+    END IF;
+
+    -- Autorizzazione: il proprietario dello schema e gli amministratori registrano per
+    -- chiunque; un volontario solo per sé; operatori e utenti non registrati non possono.
+    IF v_utente <> SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA') THEN
+        SELECT MAX(tipo_utente), MAX(id_volontario)
+        INTO v_tipo_utente, v_id_vol_utente
+        FROM UTENTE_APPLICATIVO
+        WHERE username = v_utente;
+
+        IF v_tipo_utente IS NULL OR v_tipo_utente = 'OPERATORE' THEN
+            RAISE_APPLICATION_ERROR(-20149, 'L''utente non è autorizzato a registrare presenze.');
+        END IF;
+
+        IF v_tipo_utente = 'VOLONTARIO' AND v_id_vol_utente <> p_id_volontario THEN
+            RAISE_APPLICATION_ERROR(-20148, 'Un volontario può registrare solo le proprie presenze.');
+        END IF;
     END IF;
 
     SELECT COUNT(*) INTO v_count FROM VOLONTARIO WHERE id_volontario = p_id_volontario;

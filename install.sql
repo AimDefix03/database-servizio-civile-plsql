@@ -21,6 +21,7 @@ PROMPT == Procedure, trigger, viste ==
 @sql/03_procedures/04_procedure_registro.sql
 @sql/04_triggers/01_triggers.sql
 @sql/05_views/01_presenze_da_validare.sql
+@sql/05_views/02_viste_sicurezza.sql
 
 PROMPT == Dati di esempio (caricati con i trigger attivi: ne verificano la coerenza) ==
 @sql/02_seed/01_ente.sql

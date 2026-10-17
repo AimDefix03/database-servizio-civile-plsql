@@ -44,3 +44,15 @@ Non eseguono `COMMIT` né `ROLLBACK`: la transazione è del chiamante.
 - Lo stato iniziale di una richiesta di variazione è `IN_ATTESA` (la relazione lo chiama "pendente").
 - `crea_assegnazione` verifica anche che i posti disponibili della coppia progetto-sede non siano esauriti dalle assegnazioni attive nello stesso periodo.
 - `inserisci_presenza` riceve l'identificativo del volontario come parametro: il collegamento tra utente di database e volontario non è modellato, quindi il controllo che un volontario inserisca solo le proprie presenze spetta all'applicazione.
+
+## Sicurezza
+
+| Regola | Meccanismo | Errore |
+|---|---|---|
+| Un volontario registra solo le proprie presenze | `inserisci_presenza` confronta l'utente connesso (`UTENTE_APPLICATIVO`) con il volontario indicato | `-20148` |
+| Operatori e utenti non registrati non registrano presenze | `inserisci_presenza` (l'operatore non ha neppure `EXECUTE`) | `-20149` |
+| Un volontario non legge né scrive dati altrui | Nessun privilegio sulle tabelle; viste `v_mie_*` filtrate sull'utente connesso | `ORA-00942` |
+| Gli operatori non vedono dati personali in chiaro | Vista `v_volontari_mascherati` al posto di `VOLONTARIO` | `ORA-00942` |
+
+Lo script `tests/test_sicurezza.sql` verifica queste regole connettendosi come utenti reali.
+

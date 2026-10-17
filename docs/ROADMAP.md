@@ -2,6 +2,7 @@
 
 Stato di partenza: **v1.1.0**. Schema, 10 procedure, trigger, ruoli, 48 test e CI su Oracle Database Free.
 Fase 1 completata in **v1.2.0** (57 test, lint SQL, verifica di disinstallazione).
+Fase 2 completata in **v1.3.0** (utenti collegati alle persone, viste filtrate e mascherate, 38 test di sicurezza).
 
 Ogni fase si chiude con una release, il CHANGELOG aggiornato e la CI verde.
 Alla fine di ogni fase si decide se proseguire: la roadmap è un impegno a procedere per passi, non a completare tutto.
@@ -22,11 +23,11 @@ Completata quando: CI con lint e test verdi, ogni trigger ha almeno un caso di r
 
 Obiettivo: chiudere il difetto di sicurezza più concreto e trattare con cautela i dati personali.
 
-- [ ] **Collegamento utente di database ↔ persona**: tabella di mappatura e vista/contesto basato su `SYS_CONTEXT('USERENV','SESSION_USER')`
-- [ ] **`inserisci_presenza` vincolata all'utente connesso**: un volontario può registrare solo le proprie presenze
-- [ ] **Viste con dati mascherati** (codice fiscale, email, telefono) per i ruoli diversi dall'amministratore
-- [ ] **Nota sulla protezione dei dati (GDPR)** nel README: i dati di esempio sono fittizi e lo schema non è pensato per dati reali senza queste misure
-- [ ] **Test di sicurezza**: un volontario non può leggere né scrivere dati di altri
+- [x] **Collegamento utente di database ↔ persona**: tabella di mappatura e vista/contesto basato su `SYS_CONTEXT('USERENV','SESSION_USER')`
+- [x] **`inserisci_presenza` vincolata all'utente connesso**: un volontario può registrare solo le proprie presenze
+- [x] **Viste con dati mascherati** (codice fiscale, email, telefono) per i ruoli diversi dall'amministratore
+- [x] **Nota sulla protezione dei dati (GDPR)** nel README: i dati di esempio sono fittizi e lo schema non è pensato per dati reali senza queste misure
+- [x] **Test di sicurezza**: un volontario non può leggere né scrivere dati di altri
 
 Completata quando: i test dimostrano il rifiuto dell'accesso a dati altrui e `ruolo_operatore` e `ruolo_volontario` non leggono dati personali in chiaro dove non necessario.
 
